@@ -810,16 +810,11 @@ int cardEffect(int card, int choice1, int choice2, int choice3, struct gameState
 		
     case smithy:
       //+3 Cards
-      for (i = 0; i < 3; i++)
-	{
-	  drawCard(currentPlayer, state);
-	}
-			
-      //discard card from hand
-      discardCard(handPos, currentPlayer, state, 0);
-      return 0;
-		
+      return smithyEffect(state, currentPlayer, handPos);
+	
     case village:
+      return villageEffect(state, currentPlayer, handPos);
+
       //+1 Card
       drawCard(currentPlayer, state);
 			
@@ -1119,22 +1114,8 @@ int cardEffect(int card, int choice1, int choice2, int choice3, struct gameState
 
 		
     case embargo: 
-      //+2 Coins
-      state->coins = state->coins + 2;
-			
-      //see if selected pile is in play
-      if ( state->supplyCount[choice1] == -1 )
-	{
-	  return -1;
-	}
-			
-      //add embargo token to selected supply pile
-      state->embargoTokens[choice1]++;
-			
-      //trash card
-      discardCard(handPos, currentPlayer, state, 1);		
-      return 0;
-		
+      return embargoEffect(state, currentPlayer, handPos, choice1);
+	
     case outpost:
       //set outpost flag
       state->outpostPlayed++;
@@ -1235,6 +1216,61 @@ int adventurerEffect(struct gameState *state, int currentPlayer, int *temphand, 
       *z--; // decrement count of cards in temp hand
     }
     return 0;
+}
+
+int smithyEffect(struct gameState *state, int currentPlayer, int handPos)
+{
+  unsigned i;
+
+  // draw three cards
+  for (i = 0; i < 3; i++)
+  {
+    drawCard(currentPlayer, state);
+  }
+  
+  // discard smithy
+  discardCard(handPos, currentPlayer, state, 1);
+  
+  return 0;
+}
+
+int embargoEffect(struct gameState *state, int currentPlayer, int handPos, int choice1)
+{
+  //+2 Coins
+  state->coins += 2;
+  
+  //see if selected pile is in play
+  if ( state->supplyCount[choice1] == -1 )
+  {
+    return -1;
+  }
+
+  //add embargo token to selected supply pile
+  state->embargoTokens[choice1]++;
+
+  //trash card
+  discardCard(handPos, currentPlayer, state, 1);
+
+  return 0;
+}
+
+int villageEffect(struct gameState *state, int currentPlayer, int handPos)
+{
+  int i;
+
+  //+2 cards
+  for (i = 0; i < 2; i++)
+  {
+    drawCard(currentPlayer, state);
+  }
+
+  //+1 actions
+  state->numActions += 1;
+ 
+  //discard village card
+  discardCard(handPos, currentPlayer, state, 0);
+
+  return 0;
 }
 
 int discardCard(int handPos, int currentPlayer, struct gameState *state, int trashFlag)
