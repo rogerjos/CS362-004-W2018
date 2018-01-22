@@ -15,5 +15,6 @@ int adventurerEffect(struct gameState *state, int currentPlayer, int *temphand, 
 int smithyEffect(struct gameState *state, int currentPlayer, int handPos);
 int embargoEffect(struct gameState *state, int currentPlayer, int handPos, int choice1);
 int villageEffect(struct gameState *state, int currentPlayer, int handPos);
+int sea_hagEffect(struct gameState *state, int currentPlayer);
 
 #endif
