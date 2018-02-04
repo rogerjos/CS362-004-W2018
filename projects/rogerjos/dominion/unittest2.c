@@ -16,6 +16,10 @@
 #include <stdio.h>
 #include <string.h>
 
+
+// Toggle verbose output 0 = off, else on
+#define VERBOSE 1
+
 #define SEED 23
 
 int main() {
@@ -24,7 +28,8 @@ int main() {
 
 	int i, j,	// general counters
 		provinceCount,
-		errors = 0;	// Counter for test failures
+		errors = 0,	// Counter for test failures
+		final = 0;	// Counter for cumulative errors
 
 	int k[10] = {adventurer, council_room, feast, gardens, mine,	// Arbitrary cards
 					remodel, smithy, village, baron, great_hall};
