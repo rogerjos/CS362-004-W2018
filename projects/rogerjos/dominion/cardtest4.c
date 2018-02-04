@@ -1,10 +1,12 @@
 /*******************************************************************************
- * Program: cardtest1.c
+ * Program: cardtest4.c
  * Author: Joshua L. Rogers
  * Date: 4 Feb 2018
  * Course: CS362
- * Description: test for Smithy card in dominion.c
- * Note: Card text: "+3 cards"
+ * Description: test for Adventurer card in dominion.c
+ * Card text: "Reveal cards from your deck until you reveal 2 Treasure cards. 
+ *				Put those Treasure cards into your hand and discard the other 
+ *				revealed cards."
 *******************************************************************************/
 
 #include "dominion.h"
@@ -14,6 +16,9 @@
 #include <string.h>
 
 #define SEED 23
+
+//TODO: All of it. :-/
+
 
 int main() {
 	struct gameState state,	// Current game state 

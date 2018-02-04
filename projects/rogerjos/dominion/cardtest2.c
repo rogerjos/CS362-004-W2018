@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Program: cardtest1.c
+ * Program: cardtest2.c
  * Author: Joshua L. Rogers
  * Date: 4 Feb 2018
  * Course: CS362
- * Description: test for Smithy card in dominion.c
- * Note: Card text: "+3 cards"
+ * Description: test for village card in dominion.c
+ * Card text: "+1 Card, +2 Actions"
 *******************************************************************************/
 
 #include "dominion.h"
@@ -20,46 +20,55 @@ int main() {
 					 control;	// For detecting and reverting state changes
 
 	int	player,
-		crashErrors = 0,	// Counter for smithy returning errors
+		crashErrors = 0,	// Counter for village returning errors
 		handCountErrors = 0,	// Counter for test failures
+		drawnCardErrors = 0;
 		deckCountErrors = 0,	// Counter for test failures
 		playedCountErrors = 0,	// Counter for test failures
 		playedErrors = 0,	// Counter for test failures
-		totalErrors = 0;	// Counter for cumulative errors
+		numActionsErrors = 0,
 
 	int k[10] = {adventurer, council_room, feast, gardens, mine,	// Arbitrary cards
-					remodel, smithy, village, baron, great_hall};
+					remodel, cutpurse, minion, baron, great_hall};	// No village to ensure village not drawn
 
 	/* Set up game */
 	memset(&state, 23, sizeof(struct gameState)); // Clear data
 	if (initializeGame(MAX_PLAYERS, k, SEED, &state)) {	// Print error and exit if new game fails
-			printf("smithy ABORT: initializeGame() exited with error.\n");
+			printf("village ABORT: initializeGame() exited with error.\n");
 			return 1;
 	}
 	memcpy(&control, &state, sizeof(struct gameState));	// Save beginning game state	
 	
 	for (player = 0; player < MAX_PLAYERS; player++) {	// Run test for each player
 
-		/* Get and play smithy */
+		/* Get and play village */
 		drawCard(player, state);	// Draw a card
-		state.hand[player][state.handCount[player] - 1] = smithy // Set most recently drawn card to smithy
-		crashErrors += playCard(state.handCount[player] - 1, 0, 0, 0, &state);	// Play smithy and check for error
+		state.hand[player][state.handCount[player] - 1] = village // Set most recently drawn card to village
+		crashErrors += playCard(state.handCount[player] - 1, 0, 0, 0, &state);	// Play village and check for error
 
 		/* Test outcome */
-		if (state.handCount[player] != control.handCount[player] + 2) { // Smithy draws 3 when played, so +2 net to hand
+		if (state.handCount[player] != control.handCount[player]) { // Village draws 1 when played, so no net draw
 			handCountErrors++;
 		}
 
-		if ((state.deckCount[player] + state.discardCount[player]) != (control.deckCount[player] + control.discardCount[player] - 3)) {	// Smithy draws 3, so three cards should be missing between deck and discard (discard shuffled if < 3 in deck)
+		if (state.hand[player][state.handCount[player] - 1] == village) {	// Drawn card should not be village
+			drawnCardErrors++;
+		}
+
+		if ((state.deckCount[player] + state.discardCount[player]) != (control.deckCount[player] + control.discardCount[player] -1)) {	// Village draws 1, so 1 card should be missing between deck and discard (discard shuffled if 0 in deck)
 			deckCountErrors++;
 		}
 
-		if (state.playedCardCount != control.playedCardCount + 1) {	// Smithy was played, so playedCardCount should increment
+		if (state.playedCardCount != control.playedCardCount + 1) {	// Card was played, so playedCardCount should increment
 			playedCountErrors++;
 		}
 
-		if (!((state.playedCardCount > 0) && (state.playedCards[state.playedCardCount - 1] == smithy))) {	// playedCardCount incremented and top card of playedCards should be smithy
+		if (!((state.playedCardCount > 0) && (state.playedCards[state.playedCardCount - 1] == village))) {	// playedCardCount incremented and top card of playedCards should be village
 			playedErrors++;
+		}
+
+		if (state.numActions != control.numActions + 2) {	// Village +2 actions, so action cound should be control+2
+			numActionsError++;
 		}
 
 		/* Revert expected affected members */
@@ -71,7 +80,8 @@ int main() {
 		memcpy(state.discard[player], control.discard[player], sizeof(int) * MAX_DECK);		// discard
 		memcpy(&state.playedCardCount, &control.playedCardCount, sizeof(int));	// playedCardCount
 		memcpy(state.playedCards, control.playedCards, sizeof(int) * MAX_DECK);	// playedCards
-
+		memcpy(&state.numActions, &control.numActions, sizeof(int));	// numActions
+		
 
 		if (memcmp(control, state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
 			errors++;
@@ -80,7 +90,7 @@ int main() {
 	}
 		
 	/* Display results crash */
-	printf("smithy: ");
+	printf("village: ");
 	if (crashErrors) {
 		printf("FAIL does not return error\n");
 	} 
@@ -88,45 +98,64 @@ int main() {
 		printf("PASS does not return error\n");
 	}
 
-	/* Display results draw 3 cards */
-	printf("smithy: ");
+	/* Display results draw card */
+	printf("village: ");
 	if (handCountErrors) {
-		printf("FAIL draws three cards into correct hand\n");
+		printf("FAIL draws card into correct hand\n");
 	} 
 	else {
-		printf("PASS draws three cards into correct hand\n");
+		printf("PASS draws card into correct hand\n");
+	}
+
+	/* Display results drawn card not village */
+
+	printf("village: ");
+	if (drawnCardErrors) {
+		printf("FAIL drawn card not village\n");
+	} 
+	else {
+		printf("PASS drawn card not village\n");
 	}
 
 	/* Display results deck+discard size reduced by three */
-	printf("smithy: ");
+	printf("village: ");
 	if (deckCountErrors) {
-		printf("FAIL draws three cards from correct deck\n");
+		printf("FAIL draws card from correct deck\n");
 	} 
 	else {
-		printf("PASS draws three cards from correct deck\n");
+		printf("PASS draws card from correct deck\n");
 	}
 	
 	/* Display results played count incremented */
-	printf("smithy: ");
+	printf("village: ");
 	if (playedCountErrors) {
 		printf("FAIL played card count incremented\n");
 	} 
 	else {
-		printf("PASS played card cound incremented\n");
+		printf("PASS played card count incremented\n");
 	}
 	
-	/* Display results smithy placed on top of played card pile */
-	printf("smithy: ");
+	/* Display results village placed on top of played card pile */
+	printf("village: ");
 	if (playedErrors) {
 		printf("FAIL placed on top of played card pile\n");
 	} 
 	else {
 		printf("PASS placed on top of played card pile\n");
 	}
+	
+	/* Display results numActions +2 */
+	printf("village: ");
+	if (numActionsErrors) {
+		printf("FAIL action count increased by two\n");
+	} 
+	else {
+		printf("PASS action count increased by two\n");
+	}
 
 	/* Display final results */
-	if (!(crashErrors || handCountErrors || deckCountErrors || playedCountErrors || playedErrors)){
-		printf("smithy: ALL TESTS PASSED");
+	if (!(crashErrors || handCountErrors || drawnCardErrors || deckCountErrors || playedCountErrors || playedErrors || numActionsErrors)){
+		printf("village: ALL TESTS PASSED");
 	}
 
 	return 0;
