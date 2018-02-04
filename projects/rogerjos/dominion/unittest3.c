@@ -13,14 +13,13 @@
 #include <string.h>
 
 // Toggle verbose output 0 = off, else on
-#define VERBOSE 1
+#define VERBOSE 0
 
 int main() {
 	struct gameState state,	// Current game state 
 					 control;	// For detecting unexpected state changes
 
-	int i,	// A general counter/variable
-		player,	// Current player
+	int	player,	// Current player
 		opponent,
 		fullDeckCount = 27,
 		shortDeckCount = 10,
@@ -35,7 +34,7 @@ int main() {
 						salvager, sea_hag, treasure_map};
 
 	int shortDeck[10] = {curse, estate, duchy, province, copper, silver, 
-						 gold, adventurer, councin_room, feast};
+						 gold, adventurer, council_room, feast};
 
 	/* Test shuffle() with full decks */
 
@@ -52,25 +51,25 @@ int main() {
 	/* Test shuffling full decks for all players */
 	for (player = 0; player < MAX_PLAYERS; player++) {
 		shuffle(player, &state);
-		if (!memcmp(state.deck[player], control.deck[player], sizeof(int) * fullDeckSize)) {	// Err if player deck not shuffled
+		if (!memcmp(&state.deck[player], &control.deck[player], sizeof(int) * fullDeckCount)) {	// Err if player deck not shuffled
 			if (VERBOSE) {
-				printf("shuffle() FAIL: no change to state of target %d card deck.\n", fullDeckSize);
+				printf("shuffle(): FAIL no change to state of target %d card deck.\n", fullDeckCount);
 			}
 			errors++;
 		}
 		else {
-			if (VERBOSE) printf("shuffle() PASS: changed state of target %d card deck.\n", fullDeckSize);
+			if (VERBOSE) printf("shuffle(): PASS changed state of target %d card deck.\n", fullDeckCount);
 		}
 		for (opponent = 0; opponent < MAX_PLAYERS; opponent++) {	// Check all opponents' decks
 			if (opponent != player) {
-				if (memcmp(state.deck[player], control.deck[player], sizeof(int) * fullDeckSize)) {	// Err if opponent deck shuffled
+				if (memcmp(&state.deck[opponent], &control.deck[opponent], sizeof(int) * fullDeckCount)) {	// Err if opponent deck shuffled
 					if (VERBOSE) {
-						printf("shuffle() FAIL: changed state of opponent %d card deck.\n", fullDeckSize);
+						printf("shuffle(): FAIL changed state of opponent %d card deck.\n", fullDeckCount);
 					}
 					errors++;
 				}
 				else {
-					if (VERBOSE) printf("shuffle() PASS: no change to state of opponent %d card deck.\n", fullDeckSize);
+					if (VERBOSE) printf("shuffle(): PASS no change to state of opponent %d card deck.\n", fullDeckCount);
 				}
 			}
 		}
@@ -78,25 +77,25 @@ int main() {
 	}
 
 	/* Test for changes to game state other than intended deck shuffling */
-	if(memcmp(control, state, sizeof(struct gameState))) {
+	if(memcmp(&control, &state, sizeof(struct gameState))) {
 		if (VERBOSE) {
-			printf("shuffle() FAIL: change to non-deck game state when run with %d card decks.\n", fullDeckSize);
+			printf("shuffle(): FAIL change to non-deck game state when run with %d card decks.\n", fullDeckCount);
 		}
 		errors++;
 	}
 	else {
-		if (VERBOSE) printf("shuffle() PASS: no change to non-deck game state when run with %d card decks.\n", fullDeckSize);
+		if (VERBOSE) printf("shuffle(): PASS no change to non-deck game state when run with %d card decks.\n", fullDeckCount);
 	}
 
 	/* Display results large decks*/
 	printf("shuffle(): ");
 	if (errors) {
-		printf("FAIL when shuffling large decks. (%d failures)\n", errors);
+		printf("FAIL when shuffling %d card decks.\n", fullDeckCount);
 		final += errors;
 		errors = 0;
 	} 
 	else {
-		printf("PASS when shuffling large decks.\n");
+		printf("PASS when shuffling %d card decks.\n", fullDeckCount);
 	}
 
 	/* Test shuffle() with short decks */
@@ -114,25 +113,25 @@ int main() {
 	/* Test shuffling short decks for all players */
 	for (player = 0; player < MAX_PLAYERS; player++) {
 		shuffle(player, &state);
-		if (!memcmp(state.deck[player], control.deck[player], sizeof(int) * shortDeckSize)) {	// Err if player deck not shuffled
+		if (!memcmp(&state.deck[player], &control.deck[player], sizeof(int) * shortDeckCount)) {	// Err if player deck not shuffled
 			if (VERBOSE) {
-				printf("shuffle() FAIL: no change to state of target %d card deck.\n", shortDeckSize);
+				printf("shuffle(): FAIL no change to state of target %d card deck.\n", shortDeckCount);
 			}
 			errors++;
 		}
 		else {
-			if (VERBOSE) printf("shuffle() PASS: changed state of target %d card deck.\n", shortDeckSize);
+			if (VERBOSE) printf("shuffle(): PASS changed state of target %d card deck.\n", shortDeckCount);
 		}
 		for (opponent = 0; opponent < MAX_PLAYERS; opponent++) {	// Check all opponents' decks
 			if (opponent != player) {
-				if (memcmp(state.deck[player], control.deck[player], sizeof(int) * shortDeckSize)) {	// Err if opponent deck shuffled
+				if (memcmp(&state.deck[opponent], &control.deck[opponent], sizeof(int) * shortDeckCount)) {	// Err if opponent deck shuffled
 					if (VERBOSE) {
-						printf("shuffle() FAIL: changed state of opponent %d card deck.\n", shortDeckSize);
+						printf("shuffle(): FAIL changed state of opponent %d card deck.\n", shortDeckCount);
 					}
 					errors++;
 				}
 				else {
-					if (VERBOSE) printf("shuffle() PASS: no change to state of opponent %d card deck.\n", shortDeckSize);
+					if (VERBOSE) printf("shuffle(): PASS no change to state of opponent %d card deck.\n", shortDeckCount);
 				}
 			}
 		}
@@ -140,25 +139,25 @@ int main() {
 	}
 
 	/* Test for changes to game state other than intended deck shuffling */
-	if(memcmp(control, state, sizeof(struct gameState))) {
+	if(memcmp(&control, &state, sizeof(struct gameState))) {
 		if (VERBOSE) {
-			printf("shuffle() FAIL: change to non-deck game state when run with %d card decks.\n", shortDeckSize);
+			printf("shuffle(): FAIL change to non-deck game state when run with %d card decks.\n", shortDeckCount);
 		}
 		errors++;
 	}
 	else {
-		if (VERBOSE) printf("shuffle() PASS: no change to non-deck game state when run with %d card decks.\n", shortDeckSize);
+		if (VERBOSE) printf("shuffle(): PASS no change to non-deck game state when run with %d card decks.\n", shortDeckCount);
 	}
 
 	/* Display results short decks*/
 	printf("shuffle(): ");
 	if (errors) {
-		printf("FAIL when shuffling small decks. (%d failures)\n", errors);
+		printf("FAIL when shuffling %d card decks.\n", shortDeckCount);
 		final += errors;
 		errors = 0;
 	} 
 	else {
-		printf("PASS when shuffling small decks.\n");
+		printf("PASS when shuffling %d card decks.\n", shortDeckCount);
 	}
 
 
@@ -175,46 +174,42 @@ int main() {
  
 	/* Test shuffling empty decks for all players */
 	for (player = 0; player < MAX_PLAYERS; player++) {
-		if (!shuffle(player, state)) {
+		if (!shuffle(player, &state)) {
 			if (VERBOSE) {
-				printf("shuffle() FAIL: did not exit with error on empty deck.\n");
+				printf("shuffle(): FAIL did not exit with error on empty deck.\n");
 			}
 			errors++;
 		}
 		else {
-			if (VERBOSE) printf("shuffle() PASS: exited with error on empty deck.\n");
+			if (VERBOSE) printf("shuffle(): PASS exited with error on empty deck.\n");
 		}
 	}
 
 	/* Test for changes to game state other than intended deck shuffling */
-	if(memcmp(control, state, sizeof(struct gameState))) {
+	if(memcmp(&control, &state, sizeof(struct gameState))) {
 		if (VERBOSE) {
-			printf("shuffle() FAIL: change to non-deck game state when run with %d card decks.\n", emptyDeckSize);
+			printf("shuffle(): FAIL change to non-deck game state when run with %d card decks.\n", emptyDeckCount);
 		}
 		errors++;
 	}
 	else {
-		if (VERBOSE) printf("shuffle() PASS: no change to non-deck game state when run with %d card decks.\n", emptyDeckSize);
+		if (VERBOSE) printf("shuffle(): PASS no change to non-deck game state when run with %d card decks.\n", emptyDeckCount);
 	}
 
 	/* Display results shuffling empty decks */
 	printf("shuffle(): ");
 	if (errors) {
-		printf("FAIL when shuffling empty decks. (%d failures)\n", errors);
+		printf("FAIL when shuffling %d card decks.\n", emptyDeckCount);
 		final += errors;
 		errors = 0;
 	} 
 	else {
-		printf("PASS when shuffling empty decks.\n");
+		printf("PASS when shuffling %d card decks.\n", emptyDeckCount);
 	}
 
 	/* Display final results */
-	printf("shuffle(): ");
-	if (final) {
-		printf("%d TESTS FAILED.\n", final);
-	} 
-	else {
-		printf("ALL TESTS PASSED.\n");
+	if (!final) {
+		printf("shuffle(): ALL TESTS PASSED.\n");
 	}
 
 	return 0;

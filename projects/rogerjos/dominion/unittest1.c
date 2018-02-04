@@ -34,7 +34,9 @@ int main() {
 		handCount,	// Current cards in hand
 		i,	// A general counter/variable
 		player,	// Current player	
-		errors = 0;	// Counter for test failures
+		valErrors = 0,
+		boundErrors = 0,	
+		totalErrors = 0;	
 
 	int k[10] = {adventurer, council_room, feast, gardens, mine,	// Arbitrary cards
 					remodel, smithy, village, baron, great_hall};
@@ -76,7 +78,7 @@ int main() {
 				i = (ESTATE_VALUE * handCount) + bonus;
 				if (state.coins != i) {
 					if (VERBOSE) printf("updateCoins() FAIL: found %d coins when %d expected (%d Estates, %d bonus)\n", state.coins, i, handCount, bonus);
-				errors++;
+				valErrors++;
 				}
 
 				/* Check for unwanted modifications to game state */
@@ -84,7 +86,7 @@ int main() {
 				memcpy(&control.coins, &state.coins, sizeof(int));
 				if (memcmp(&state, &control, sizeof(struct gameState))) {
 					if (VERBOSE) printf("updateCoins() FAIL: out of bound game state values modified. (%d Estates, %d bonus)\n", handCount, bonus);
-					errors++;
+					boundErrors++;
 				}
 
 				/* Test Hand of Copper */
@@ -93,7 +95,7 @@ int main() {
 				i = (COPPER_VALUE * handCount) + bonus;
 				if (state.coins != i) {
 					if (VERBOSE) printf("updateCoins() FAIL: found %d coins when %d expected (%d Copper, %d bonus)\n", state.coins, i, handCount, bonus);
-					errors++;
+					valErrors++;
 				}
 	
 				/* Check for unwanted modifications to game state */
@@ -101,7 +103,7 @@ int main() {
 				memcpy(&control.coins, &state.coins, sizeof(int));
 				if (memcmp(&state, &control, sizeof(struct gameState))) {
 					if (VERBOSE) printf("updateCoins() FAIL: out of bound game state values modified. (%d Copper,, %d bonus)\n", handCount, bonus);
-					errors++;
+					boundErrors++;
 				}
 
 				/* Test Hand of Silver */
@@ -110,7 +112,7 @@ int main() {
 				i = (SILVER_VALUE * handCount) + bonus;
 				if (state.coins != i) {
 					if (VERBOSE) printf("updateCoins() FAIL: found %d coins when %d expected (%d Silver, %d bonus)\n", state.coins, i, handCount, bonus);
-					errors++;
+					valErrors++;
 				}
 
 				/* Check for unwanted modifications to game state */
@@ -118,7 +120,7 @@ int main() {
 				memcpy(&control.coins, &state.coins, sizeof(int));
 				if (memcmp(&state, &control, sizeof(struct gameState))) {
 					if (VERBOSE) printf("updateCoins() FAIL: out of bound game state values modified. (%d Silver, %d bonus)\n", handCount, bonus);
-					errors++;
+					boundErrors++;
 				}
 	
 				/* Test Hand of Gold */
@@ -127,7 +129,7 @@ int main() {
 				i = (GOLD_VALUE * handCount) + bonus;
 				if (state.coins != i) {
 					if (VERBOSE) printf("updateCoins() FAIL: found %d coins when %d expected (%d Gold, %d bonus)\n", state.coins, i, handCount, bonus);
-					errors++;
+					valErrors++;
 				}
 
 				/* Check for unwanted modifications to game state */
@@ -135,7 +137,7 @@ int main() {
 				memcpy(&control.coins, &state.coins, sizeof(int));
 				if (memcmp(&state, &control, sizeof(struct gameState))) {
 					if (VERBOSE) printf("updateCoins() FAIL: out of bound game state values modified. (%d Gold, %d bonus)\n", handCount, bonus);
-					errors++;
+					boundErrors++;
 				}			
 
 				/* Check combinations of coin types */
@@ -148,7 +150,7 @@ int main() {
 					i = (COPPER_VALUE + SILVER_VALUE) + bonus;
 					if (state.coins != i) {
 						if (VERBOSE) printf("updateCoins() FAIL: found %d coins when %d expected (1 Copper, 1 Silver, %d bonus)\n", state.coins, i, bonus);
-						errors++;
+						valErrors++;
 					}
 
 					/* Check for unwanted modifications to game state */	
@@ -156,7 +158,7 @@ int main() {
 					memcpy(&control.coins, &state.coins, sizeof(int));
 					if (memcmp(&state, &control, sizeof(struct gameState))) {
 						if (VERBOSE) printf("updateCoins() FAIL: modified out of bound game state values. (1 Copper, 1 Silver, %d bonus)\n", bonus);
-						errors++;
+						boundErrors++;
 					}
 
 					/* Test Hand of Copper/Gold */
@@ -166,7 +168,7 @@ int main() {
 						i = (COPPER_VALUE + GOLD_VALUE) + bonus;
 					if (state.coins != i) {
 						if (VERBOSE) printf("updateCoins() FAIL: found %d coins when %d expected (1 Copper, 1 Gold, %d bonus)\n", state.coins, i, bonus);
-						errors++;
+						valErrors++;
 					}
 
 					/* Check for unwanted modifications to game state */
@@ -174,7 +176,7 @@ int main() {
 					memcpy(&control.coins, &state.coins, sizeof(int));
 					if (memcmp(&state, &control, sizeof(struct gameState))) {
 						if (VERBOSE) printf("updateCoins() FAIL: out of bound game state values modified. (1 Copper, 1 Gold, %d bonus)\n", bonus);
-						errors;
+						boundErrors++;
 					}
 			
 					/* Test Hand of Silver/Gold */
@@ -184,7 +186,7 @@ int main() {
 							i = (SILVER_VALUE + GOLD_VALUE) + bonus;
 					if (state.coins != i) {
 						if (VERBOSE) printf("updateCoins() FAIL: found %d coins when %d expected (1 Silver, 1 Gold, %d bonus)\n", state.coins, i, bonus);
-						errors;
+						valErrors++;
 					}
 	
 					/* Check for unwanted modifications to game state */
@@ -192,7 +194,7 @@ int main() {
 					memcpy(&control.coins, &state.coins, sizeof(int));
 					if (memcmp(&state, &control, sizeof(struct gameState))) {
 						if (VERBOSE) printf("updateCoins() FAIL: out of bound game state values modified. (1 Silver, 1 Gold, %d bonus)\n", bonus);
-						errors++;
+						boundErrors++;
 					}
 				}
 
@@ -206,7 +208,7 @@ int main() {
 					i = COPPER_VALUE + SILVER_VALUE + GOLD_VALUE + bonus;
 					if (state.coins != i) {
 						if (VERBOSE) printf("updateCoins() FAIL: found %d coins when %d expected (1 Copper, 1 Silver, 1 Gold, %d bonus)\n", state.coins, i, bonus);
-						errors++;
+						valErrors++;
 					}					
 	
 					/* Check for unwanted modifications to game state */
@@ -214,20 +216,36 @@ int main() {
 					memcpy(&control.coins, &state.coins, sizeof(int));
 					if (memcmp(&state, &control, sizeof(struct gameState))) {
 						if (VERBOSE) printf("updateCoins() FAIL: out of bound game state values modified. (1 Copper, 1 Silver, 1 Gold, %d bonus)\n", bonus);
-						errors++;
+						boundErrors++;
 					}			
 				}
 			}
 		}
 	}
 
-	/* Display final results */
 	printf("updateCoins(): ");
-	if (errors) {
-		printf("%d TESTS FAILED.\n", errors);
-	} 
+	if (valErrors) {
+		printf("FAIL");
+	}
 	else {
-		printf("ALL TESTS PASSED.\n");
+		printf("PASS");
+	}
+	printf(" coin combination values as expected\n");
+
+	printf("updateCoins(): ");
+	if (boundErrors) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" no out of bound modifications to game state\n");
+
+	totalErrors = valErrors + boundErrors;
+	
+	/* Display final results */
+	if (!totalErrors) {
+		printf("updateCoins(): ALL TESTS PASSED.\n");
 	}
 
 	return 0;

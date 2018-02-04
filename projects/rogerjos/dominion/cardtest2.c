@@ -22,11 +22,13 @@ int main() {
 	int	player,
 		crashErrors = 0,	// Counter for village returning errors
 		handCountErrors = 0,	// Counter for test failures
-		drawnCardErrors = 0;
+		drawnCardErrors = 0,
 		deckCountErrors = 0,	// Counter for test failures
 		playedCountErrors = 0,	// Counter for test failures
 		playedErrors = 0,	// Counter for test failures
 		numActionsErrors = 0,
+		boundErrors = 0,
+		totalErrors = 0;
 
 	int k[10] = {adventurer, council_room, feast, gardens, mine,	// Arbitrary cards
 					remodel, cutpurse, minion, baron, great_hall};	// No village to ensure village not drawn
@@ -42,8 +44,8 @@ int main() {
 	for (player = 0; player < MAX_PLAYERS; player++) {	// Run test for each player
 
 		/* Get and play village */
-		drawCard(player, state);	// Draw a card
-		state.hand[player][state.handCount[player] - 1] = village // Set most recently drawn card to village
+		drawCard(player, &state);	// Draw a card
+		state.hand[player][state.handCount[player] - 1] = village; // Set most recently drawn card to village
 		crashErrors += playCard(state.handCount[player] - 1, 0, 0, 0, &state);	// Play village and check for error
 
 		/* Test outcome */
@@ -68,7 +70,7 @@ int main() {
 		}
 
 		if (state.numActions != control.numActions + 2) {	// Village +2 actions, so action cound should be control+2
-			numActionsError++;
+			numActionsErrors++;
 		}
 
 		/* Revert expected affected members */
@@ -83,8 +85,8 @@ int main() {
 		memcpy(&state.numActions, &control.numActions, sizeof(int));	// numActions
 		
 
-		if (memcmp(control, state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
-			errors++;
+		if (memcmp(&control, &state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
+			boundErrors++;
 		}	
 		memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	
 	}
@@ -108,7 +110,6 @@ int main() {
 	}
 
 	/* Display results drawn card not village */
-
 	printf("village: ");
 	if (drawnCardErrors) {
 		printf("FAIL drawn card not village\n");
@@ -152,6 +153,23 @@ int main() {
 	else {
 		printf("PASS action count increased by two\n");
 	}
+
+	/* Display results for boundary errors */
+	printf("village: ");
+	if (boundErrors) {
+		printf("FAIL no unexpected modifications to game state\n");
+	}
+	else {
+		printf("PASS no unexpected modifications to game state\n");
+	}
+
+	totalErrors = crashErrors + handCountErrors + drawnCardErrors + deckCountErrors + playedCountErrors + playedErrors + numActionsErrors + boundErrors;
+
+	/* Display final results */
+	if (!totalErrors){
+		printf("village: ALL TESTS PASSED");
+	}
+
 
 	/* Display final results */
 	if (!(crashErrors || handCountErrors || drawnCardErrors || deckCountErrors || playedCountErrors || playedErrors || numActionsErrors)){

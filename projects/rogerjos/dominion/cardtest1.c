@@ -20,12 +20,13 @@ int main() {
 					 control;	// For detecting and reverting state changes
 
 	int	player,
-		crashErrors = 0,	// Counter for smithy returning errors
-		handCountErrors = 0,	// Counter for test failures
-		deckCountErrors = 0,	// Counter for test failures
-		playedCountErrors = 0,	// Counter for test failures
-		playedErrors = 0,	// Counter for test failures
-		totalErrors = 0;	// Counter for cumulative errors
+		crashErrors = 0,
+		handCountErrors = 0,	
+		deckCountErrors = 0,
+		playedCountErrors = 0,
+		playedErrors = 0,	
+		boundErrors = 0,	
+		totalErrors = 0;
 
 	int k[10] = {adventurer, council_room, feast, gardens, mine,	// Arbitrary cards
 					remodel, smithy, village, baron, great_hall};
@@ -41,8 +42,8 @@ int main() {
 	for (player = 0; player < MAX_PLAYERS; player++) {	// Run test for each player
 
 		/* Get and play smithy */
-		drawCard(player, state);	// Draw a card
-		state.hand[player][state.handCount[player] - 1] = smithy // Set most recently drawn card to smithy
+		drawCard(player, &state);	// Draw a card
+		state.hand[player][state.handCount[player] - 1] = smithy; // Set most recently drawn card to smithy
 		crashErrors += playCard(state.handCount[player] - 1, 0, 0, 0, &state);	// Play smithy and check for error
 
 		/* Test outcome */
@@ -73,8 +74,8 @@ int main() {
 		memcpy(state.playedCards, control.playedCards, sizeof(int) * MAX_DECK);	// playedCards
 
 
-		if (memcmp(control, state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
-			errors++;
+		if (memcmp(&control, &state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
+			boundErrors++;
 		}	
 		memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	
 	}
@@ -124,8 +125,19 @@ int main() {
 		printf("PASS placed on top of played card pile\n");
 	}
 
+	/* Display results for boundary errors */
+	printf("smithy: ");
+	if (boundErrors) {
+		printf("FAIL no unexpected modifications to game state\n");
+	}
+	else {
+		printf("PASS no unexpected modifications to game state\n");
+	}
+
+	totalErrors = crashErrors + handCountErrors + deckCountErrors + playedCountErrors + playedErrors + boundErrors;
+
 	/* Display final results */
-	if (!(crashErrors || handCountErrors || deckCountErrors || playedCountErrors || playedErrors)){
+	if (!totalErrors){
 		printf("smithy: ALL TESTS PASSED");
 	}
 
