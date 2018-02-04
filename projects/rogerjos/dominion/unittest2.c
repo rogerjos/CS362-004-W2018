@@ -3,7 +3,11 @@
  * Author: Joshua L. Rogers
  * Date: 4 Feb 2018
  * Course: CS362
- * Description: Unit test for drawCard() function in dominion.c
+ * Description: Unit test for isGameOver() function in dominion.c
+ * Note: Dominion rules state that the game is over only if 
+ *			1) the supply of Province cards is empty 
+ *							or 
+ *			2) any three supply piles are empty.
 *******************************************************************************/
 
 #include "dominion.h"
@@ -16,122 +20,414 @@
 
 int main() {
 	struct gameState state,	// Current game state 
-					 control;	// For detecting unexpected state changes
+					 control;	// For detecting and reverting state changes
 
-	int i,	// A general counter/variable
-		player,	// Current player
-		deckSize;	
+	int i, j,	// general counters
+		provinceCount,
 		errors = 0;	// Counter for test failures
 
 	int k[10] = {adventurer, council_room, feast, gardens, mine,	// Arbitrary cards
 					remodel, smithy, village, baron, great_hall};
 
-	for (player = 0; player < MAX_PLAYERS; player++) { // Test all players
+	int singleTest[5] = {curse, duchy, copper, adventurer, province}; // One of each card type + province
 
-				/* Clear junk data from gameState structs */
-				memset(&state, 23, sizeof(struct gameState));
-				memset(&control, 23, sizeof(struct gameState));
+	int doubleTest[12][2] = {{curse, duchy}, {curse, silver}, {curse, feast},
+							{estate, silver}, {estate, gardens}, {gold, remodel}, 
+							{estate, duchy}, {silver, gold}, {village, baron}};
+							{province, duchy}, {province, gold}, {province, baron}};
 
-				/* Fill state with possible data & copy it to control */
-				if (initializeGame(MAX_PLAYERS, k, SEED, &state)) {
-					printf("drawCard() ABORT: initializeGame() exited with error.\n");
-					return 1;
+	int tripleTest[24][3] = {{curse, estate, duchy}, {curse, silver, gold}, {curse, mine, great_hall}, 
+							{curse, duchy, gold}, {curse, estate, feast}, {curse, duchy, adventurer}, 
+							{estate, silver, baron}, {duchy, village, mine}, {estate, silver, copper}, 
+							{copper, silver, gold}, {copper, silver, smithy}, {gold, remodel, smithy}, 
+							{copper, silver, gold}, {copper, silver, smithy}, {gold, remodel, smithy}, 
+							{province, silver, gold}, {copper, province, smithy}, {gold, remodel, province}, 
+							{province, silver, gold}, {province, silver, smithy}, {gold, province, smithy}, 
+							{feast, smithy, village}, {curse, province, gold}, {curse, mine, province}};
+
+	int quadTest[8][4] = {{curse, estate, silver, village}, {copper, silver, gold, estate}, 
+							{curse, province, silver, village}, {province, silver, gold, estate}, 
+							{estate, dutchy, gold, great_hall}, {feast, gardens, mine, smithy},
+							{estate, dutchy, gold, province}, {province, gardens, mine, smithy}};
+
+	/* Set up game */
+	memset(&state, 23, sizeof(struct gameState)); // Clear data
+	if (initializeGame(MAX_PLAYERS, k, SEED, &state)) {	// Print error and exit if new game fails
+			printf("isGameOver() ABORT: initializeGame() exited with error.\n");
+			return 1;
+	}
+	memcpy(&control, &state, sizeof(struct gameState));	// Save beginning game state	
+	
+
+	/* Test with all in-play piles full */
+	if (isGameOver(&state)) {
+		if (VERBOSE) {
+			printf("isGameOver() FAIL: Game over with all supply piles full.\n");
+		}
+		errors++;
+	}
+	else if (VERBOSE) {
+		printf("isGameOver() PASS: Game not over with all supply piles full.\n");
+	}
+
+	/* Check for out of bound changes to game state */
+	if (memcmp(control, state, sizeof(struct gameState))) {
+		if (VERBOSE) {
+			printf("isGameOver() FAIL: Out of bound changes made to game state struct.\n");
+		}
+		errors++;
+	}
+	else if (VERBOSE) {
+		printf("isGameOver() PASS: No out of bound changes made to game state struct.\n");
+	}
+
+	memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	
+
+
+	/* Test with all in-play piles at 9, 5, and 1 */
+	for (i = 9; i > 0; i -= 4) { 
+		for (j = curse; j <= treasure_map; j++) {	// Step through all cards (enum-ed)
+			if (state.supplyCount[j] > -1)
+			{	// Unused cards were initialized to -1
+				state.supplyCount[j] = i;	// Set piles in play
+			}
+		}
+	
+		if (isGameOver(&state)) {	// Check for game over
+			if (VERBOSE) {
+				printf("isGameOver() FAIL: Game over with all supply piles at %d cards.\n", i);
+			}
+			errors++;
+		}
+		else if (VERBOSE) {
+			printf("isGameOver() PASS: Game not over with all supply piles at %d cards.\n", i);
+		}
+	
+		for (j = curse; j <= treasure_map; j++) {	// Step through all cards (enum-ed)
+			if (state.supplyCount[j] > -1)
+			{	// Unused cards were set to -1
+				state.supplyCount[j] = control.supplyCount[j];	// Revert used cards to 10
+			}
+		}
+	
+		/* Check for out of bound changes to game state */
+		if (memcmp(control, state, sizeof(struct gameState))) {
+			if (VERBOSE) {
+				printf("isGameOver() FAIL: Out of bound changes made to game state struct.\n");
+			}
+			errors++;
+		}
+		else if (VERBOSE) {
+			printf("isGameOver() PASS: No out of bound changes made to game state struct.\n");
+		}
+	
+		memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	
+	}
+
+	/* Display results no empty supply */
+	printf("isGameOver(): ");
+	if (errors) {
+		printf("FAIL when no supply piles empty. (%d failures)\n", errors);
+		final += errors;
+		errors = 0;
+	} 
+	else {
+		printf("PASS when no supply piles empty.\n");
+	}
+
+	/* Test with one empty pile, one test per card type + province */
+	for (i = 0; i < 5; i++) {	// Step through each card type
+		state.supplyCount[singleTest[i]] = 0;	// Empty the supply of chosen type
+		
+		if (state.supplyCount[province]) {	// If province supply not empty
+			if (isGameOver(&state)) {	// If game over
+				if (VERBOSE) {
+					printf("isGameOver() FAIL: Game over with one non-province supply pile empty.\n");
 				}
-				memcpy(&control, &state, sizeof(struct gameState));		
-
-				/* Test drawing entire deck */
-				deckSize = state.deckCount[player]; 
-				for (i = 0; i < deckSize; i++) { 
-					if(drawCard(player, &state)) {
-						printf("drawCard() FAIL: Exited with error. (Player %d with %d cards in deck, %d cards in hand, %d discarded)\n")
-					}
+				errors++;
+			}
+			else {
+				if (VERBOSE) {
+					printf("isGameOver() PASS: Game not over with one non-province supply pile empty.\n");
 				}
-
-				state.handCount[player] = handCount;	// Update handCount in state to match test loop
-			
-
-				/* Test Hand of Estates */
-				memcpy(state.hand[player], es, sizeof(int) * handCount);
-				updateCoins(player, &state, bonus);
-				i = (ESTATE_VALUE * handCount) + bonus;
-				if (state.coins != i) {
-					printf("FAILURE %d: updateCoins() found %d coins when %d expected (%d Estates, %d bonus)\n", ++errors, state.coins, i, handCount, bonus);
+			}
+		}
+		else {	// If province supply empty
+			if (isGameOver(&state)) {	// If game over
+				if (VERBOSE) {
+					printf("isGameOver() PASS: Game over with province supply pile empty.\n");
 				}
-
-				/* Check for unwanted modifications to game state */
-				memcpy(control.hand[player], state.hand[player], sizeof(int) * handCount);
-				memcpy(&control.coins, &state.coins, sizeof(int));
-				if (memcmp(&state, &control, sizeof(struct gameState))) {
-					printf("FAILURE %d: updateCoins() modified out of bound game state values. (%d Estates, %d bonus)\n", ++errors, handCount, bonus);
+			}
+			else {
+				if (VERBOSE) {
+					printf("isGameOver() FAIL: Game not over with province supply pile empty.\n");
 				}
-	if (!errors) printf("ALL TESTS PASSED.\n");
+				errors++;
+			}
+		}
+		
+
+		state.supplyCount[singleTest[i]] = control.supplyCount[singleTest[i]];	// Revert the supply of chosen type
+	
+		/* Check for out of bound changes to game state */
+		if (memcmp(control, state, sizeof(struct gameState))) {
+			if (VERBOSE) {
+				printf("isGameOver() FAIL: Out of bound changes made to game state struct.\n");
+			}
+			errors++;
+		}
+		else if (VERBOSE) {
+			printf("isGameOver() PASS: No out of bound changes made to game state struct.\n");
+		}
+	
+		memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	
+	}
+
+	/* Display results one empty supply */
+	printf("isGameOver(): ");
+	if (errors) {
+		printf("FAIL when one supply pile empty. (%d failures)\n", errors);
+		final += errors;
+		errors = 0;
+	} 
+	else {
+		printf("PASS when one supply pile empty.\n");
+	}
+
+	/* Test with two empty pile, one test per card type combination */
+	for (i = 0; i < 12; i++) {	// Step through each card type combination
+		state.supplyCount[doubleTest[i][0]] = 0;	// Empty the supply of first chosen type
+		state.supplyCount[doubleTest[i][1]] = 0;	// Empty the supply of second chosen type
+
+		if (state.supplyCount[province]) {	// If province supply not empty
+			if (isGameOver(&state)) {	// If game over
+				if (VERBOSE) {
+					printf("isGameOver() FAIL: Game over with two non-province supply piles empty.\n");
+				}
+				errors++;
+			}
+			else {
+				if (VERBOSE) {
+					printf("isGameOver() PASS: Game not over with two non-province supply piles empty.\n");
+				}
+			}
+		}
+		else {	// If province supply empty
+			if (isGameOver(&state)) {	// If game over
+				if (VERBOSE) {
+					printf("isGameOver() PASS: Game over with province supply pile empty.\n");
+				}
+			}
+			else {
+				if (VERBOSE) {
+					printf("isGameOver() FAIL: Game not over with province supply pile empty.\n");
+				}
+				errors++;
+			}
+		}
+	
+		memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	
+	}
+
+	/* Display results two empty supply piles */
+	printf("isGameOver(): ");
+	if (errors) {
+		printf("FAIL when two supply piles empty. (%d failures)\n", errors);
+		final += errors;
+		errors = 0;
+	} 
+	else {
+		printf("PASS when two supply piles empty.\n");
+	}
+
+
+	/* Test with three empty piles */
+	for (i = 0; i < 24; i++) {	// Step through each combination in array
+		state.supplyCount[tripleTest[i][0]] = 0;	// Empty the supply of first chosen type
+		state.supplyCount[tripleTest[i][1]] = 0;	// Empty the supply of second chosen type
+		state.supplyCount[tripleTest[i][2]] = 0;	// Empty the supply of third chosen type
+
+
+		if (state.supplyCount[province]) {	// If province supply not empty
+			if (isGameOver(&state)) {	// If game over
+				if (VERBOSE) {
+					printf("isGameOver() PASS: Game over with three non-province supply piles empty.\n");
+				}
+			}
+			else { 
+				if (VERBOSE) {
+					printf("isGameOver() FAIL: Game not over with three non-province supply piles empty.\n");
+				}
+				errors++;
+			}
+		}
+		else {	// If province supply empty
+			if (isGameOver(&state)) {	// If game over
+				if (VERBOSE) {
+					printf("isGameOver() PASS: Game over with province and two other supply piles empty.\n");
+				}
+			}
+			else {
+				if (VERBOSE) {
+					printf("isGameOver() FAIL: Game not over with province and two other supply piles empty.\n");
+				}
+				errors++;
+			}
+		}
+
+		state.supplyCount[tripleTest[i][0]] = control.supplyCount[tripleTest[i][0]]; 	// Revert the supply of first chosen type
+		state.supplyCount[tripleTest[i][1]] = control.supplyCount[tripleTest[i][1]]; 	// Revert the supply of second chosen type
+		state.supplyCount[tripleTest[i][2]] = control.supplyCount[tripleTest[i][2]]; 	// Revert the supply of third chosen type
+	
+		/* Check for out of bound changes to game state */
+		if (memcmp(control, state, sizeof(struct gameState))) {
+			if (VERBOSE) {
+				printf("isGameOver() FAIL: Out of bound changes made to game state struct.\n");
+			}
+			errors++;
+		}
+		else if (VERBOSE) {
+			printf("isGameOver() PASS: No out of bound changes made to game state struct.\n");
+		}
+	
+		memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	
+	}
+
+	/* Display results three empty supply piles */
+	printf("isGameOver(): ");
+	if (errors) {
+		printf("FAIL when three supply piles empty. (%d failures)\n", errors);
+		final += errors;
+		errors = 0;
+	} 
+	else {
+		printf("PASS when three supply piles empty.\n");
+	}
+
+	/* Test with four empty piles */
+	for (i = 0; i < 8; i++) {	// Step through each combination in array
+		state.supplyCount[quadTest[i][0]] = 0;	// Empty the supply of chosen types
+		state.supplyCount[quadTest[i][1]] = 0;	
+		state.supplyCount[quadTest[i][2]] = 0;	
+		state.supplyCount[quadTest[i][3]] = 0;	
+
+		if (state.supplyCount[province]) {	// If province supply not empty
+			if (isGameOver(&state)) {	// If game over
+				if (VERBOSE) {
+					printf("isGameOver() PASS: Game over with four non-province supply piles empty.\n");
+				}
+			}
+			else { 
+				if (VERBOSE) {
+					printf("isGameOver() FAIL: Game not over with four non-province supply piles empty.\n");
+				}
+				errors++;
+			}
+		}
+		else {	// If province supply empty
+			if (isGameOver(&state)) {	// If game over
+				if (VERBOSE) {
+					printf("isGameOver() PASS: Game over with province and three other supply piles empty.\n");
+				}
+			}
+			else {
+				if (VERBOSE) {
+					printf("isGameOver() FAIL: Game not over with province and three other supply piles empty.\n");
+				}
+				errors++;
+			}
+		}
+
+		state.supplyCount[quadTest[i][0]] = control.supplyCount[quadTest[i][0]]; 	// Revert the supply of chosen types
+		state.supplyCount[quadTest[i][1]] = control.supplyCount[quadTest[i][1]]; 	
+		state.supplyCount[quadTest[i][2]] = control.supplyCount[quadTest[i][2]];	
+		state.supplyCount[quadTest[i][3]] = control.supplyCount[quadTest[i][3]]; 
+	
+		/* Check for out of bound changes to game state */
+		if (memcmp(control, state, sizeof(struct gameState))) {
+			if (VERBOSE) {
+				printf("isGameOver() FAIL: Out of bound changes made to game state struct.\n");
+			}
+			errors++;
+		}
+		else if (VERBOSE) {
+			printf("isGameOver() PASS: No out of bound changes made to game state struct.\n");
+		}
+	
+		memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	
+	}
+
+	/* Display results four empty supply piles */
+	printf("isGameOver(): ");
+	if (errors) {
+		printf("FAIL when four supply piles empty. (%d failures)\n", errors);
+		final += errors;
+		errors = 0;
+	} 
+	else {
+		printf("PASS when four supply piles empty.\n");
+	}
+
+	/* Test with all supply piles empty */
+	for (j = curse; j <= treasure_map; j++) {	// Step through all cards (enum-ed)
+		if (state.supplyCount[j] > -1)
+		{	// Unused cards were initialized to -1
+			state.supplyCount[j] = 0;	// Set piles in play
+		}
+	}
+	
+	if (isGameOver(&state)) {	// Check for game over
+		if (VERBOSE) {
+			printf("isGameOver() PASS: Game over with all supply piles empty.\n");
+		}
+	}
+	else { 
+		if (VERBOSE) {
+			printf("isGameOver() FAIL: Game not over with all supply piles empty.\n");
+		}
+		errors++;
+	}
+	
+	for (j = curse; j <= treasure_map; j++) {	// Step through all cards (enum-ed)
+		if (state.supplyCount[j] > -1)
+		{	// Unused cards were set to -1
+			state.supplyCount[j] = control.supplyCount[j];	// Revert used cards
+		}
+	}
+	
+	/* Check for out of bound changes to game state */
+	if (memcmp(control, state, sizeof(struct gameState))) {
+		if (VERBOSE) {
+			printf("isGameOver() FAIL: Out of bound changes made to game state struct.\n");
+		}
+		errors++;
+	}
+	else if (VERBOSE) {
+		printf("isGameOver() PASS: No out of bound changes made to game state struct.\n");
+	}
+
+	memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	
+
+	/* Display results no empty supply */
+	printf("isGameOver(): ");
+	if (errors) {
+		printf("FAIL when all supply piles empty. (%d failures)\n", errors);
+		final += errors;
+		errors = 0;
+	} 
+	else {
+		printf("PASS when all supply piles empty.\n");
+	}
+
+	/* Display final results */
+	printf("isGameOver(): ");
+	if (final) {
+		printf("%d TESTS FAILED.\n", final);
+	} 
+	else {
+		printf("ALL TESTS PASSED.\n");
+	}
+
 	return 0;
 }
-
-/* Strcutcure notes:
-	Init a game
-	all players up to max players take turns drawing cards.
-		for each card check that handcount went up, deck count went down, drawn card = deck card, and no other gamestate changed unless a shuffle was necessary.
-	Do this until a shuffle is necessary, at which point test the normal stuff, but take shuffle into account.
-	Also try to draw fro an empty deck with no discard. Expect error -1 and no change
-
-
-int drawCard(int player, struct gameState *state)
-{	int counet;
-  int deckCounter;
-  if (state->deckCount[player] <= 0){//Deck is empty
-    
-    //Step 1 Shuffle the discard pile back into a deck
-    int i;
-    //Move discard to deck
-    for (i = 0; i < state->discardCount[player];i++){
-      state->deck[player][i] = state->discard[player][i];
-      state->discard[player][i] = -1;
-    }
-
-    state->deckCount[player] = state->discardCount[player];
-    state->discardCount[player] = 0;//Reset discard
-
-    //Shufffle the deck
-    shuffle(player, state);//Shuffle the deck up and make it so that we can draw
-   
-    if (DEBUG){//Debug statements
-      printf("Deck count now: %d\n", state->deckCount[player]);
-    }
-    
-    state->discardCount[player] = 0;
-
-    //Step 2 Draw Card
-    count = state->handCount[player];//Get current player's hand count
-    
-    if (DEBUG){//Debug statements
-      printf("Current hand count: %d\n", count);
-    }
-    
-    deckCounter = state->deckCount[player];//Create a holder for the deck count
-
-    if (deckCounter == 0)
-      return -1;
-
-    state->hand[player][count] = state->deck[player][deckCounter - 1];//Add card to hand
-    state->deckCount[player]--;
-    state->handCount[player]++;//Increment hand count
-  }
-
-  else{
-    int count = state->handCount[player];//Get current hand count for player
-    int deckCounter;
-    if (DEBUG){//Debug statements
-      printf("Current hand count: %d\n", count);
-    }
-
-    deckCounter = state->deckCount[player];//Create holder for the deck count
-    state->hand[player][count] = state->deck[player][deckCounter - 1];//Add card to the hand
-    state->deckCount[player]--;
-    state->handCount[player]++;//Increment hand count
-  }
-
-  return 0;
-}
-
 
