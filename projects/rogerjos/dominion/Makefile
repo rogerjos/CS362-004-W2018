@@ -57,6 +57,44 @@ cardtest3: cardtest3.c dominion.o rngs.o
 cardtest4: cardtest4.c dominion.o rngs.o
 	gcc -o cardtest4 -g cardtest4.c dominion.o rngs.o $(CFLAGS)
 
+rununittest1: unittest1.c dominion.o rngs.o
+	gcc -o unittest1 -g  unittest1.c dominion.o rngs.o $(CFLAGS)
+	echo "unittest1.c:" > unittest1results.out
+	./unittest1 &>> unittest1results.out
+	gcov -abcfu dominion.c | sed -n '/updateCoins/{n;p; n;p; n;p; n;p}' >> unittest1results.out
+	
+rununittest2: unittest2.c dominion.o rngs.o
+	gcc -o unittest2 -g  unittest2.c dominion.o rngs.o $(CFLAGS)
+	echo "unittest2.c:" > unittest2results.out
+	./unittest2 &>> unittest2results.out
+	gcov -abcfu dominion.c | sed -n '/isGameOver/{n;p; n;p; n;p; n;p}' >> unittest2results.out
+	
+rununittest3: unittest3.c dominion.o rngs.o
+	gcc -o unittest3 -g  unittest3.c dominion.o rngs.o $(CFLAGS)
+	echo "unittest3.c:" > unittest3results.out
+	./unittest3 &>> unittest3results.out
+	gcov -abcfu dominion.c | sed -n '/shuffle/{n;p; n;p; n;p; n;p}' >> unittest3results.out
+	
+rununittest4: unittest4.c dominion.o rngs.o
+	gcc -o unittest4 -g  unittest4.c dominion.o rngs.o $(CFLAGS)
+	echo "unittest4.c:" > unittest4results.out
+	./unittest4 &>> unittest4results.out
+	gcov -abcfu dominion.c | sed -n '/discardCard/{n;p; n;p; n;p; n;p}' >> unittest4results.out
+
+runcardtests: cardtest1 cardtest2 cardtest3 cardtest4
+	echo "cardtest1.c:" > unittestresults.out
+	./cardtest1 &>> unittestresults.out
+	gcov -abcfu dominion.c | sed -n '/cardEffect/{n;p; n;p; n;p; n;p}' >> unittestresults.out
+	echo "cardtest2.c:" >> unittestresults.out
+	./cardtest2 &>> unittestresults.out
+	gcov -abcfu dominion.c | sed -n '/cardEffect/{n;p; n;p; n;p; n;p}' >> unittestresults.out
+	echo "cardtest3.c:" >> unittestresults.out
+	./cardtest3 &>> unittestresults.out
+	gcov -abcfu dominion.c | sed -n '/cardEffect/{n;p; n;p; n;p; n;p}' >> unittestresults.out
+	echo "cardtest4.c:" >> unittestresults.out
+	./cardtest4 &>> unittestresults.out
+	gcov -abcfu dominion.c | sed -n '/cardEffect/{n;p; n;p; n;p; n;p}' >> unittestresults.out
+
 unittestresults.out: unittest1 unittest2 unittest3 unittest4 cardtest1 cardtest2 cardtest3 cardtest4
 	# gcov piped to sed from Piazza @87. My thanks to cas donoghue. sed is great!
 	echo -e "Result for running Dominion unit tests:\n" > unittestresults.out
