@@ -15,6 +15,10 @@
 #include <stdio.h>
 #include <string.h>
 
+
+// VERBOSE triggers extra error messages. =0 off, else on
+#define VERBOSE 0
+
 #define SEED 23
 
 int main() {
@@ -22,13 +26,14 @@ int main() {
 					 control;	// For detecting and reverting state changes
 
 	int	player,
-		treasureCount,	
+		returnVal,
 		crashErrors = 0,	
 		handCountErrors = 0,	
-		treasureErrors = 0;
+		treasureErrors = 0,
 		deckCountErrors = 0,	
 		playedCountErrors = 0,	
 		playedErrors = 0,
+		boundErrors = 0,
 		totalErrors = 0;
 
 	int k[10] = {cutpurse, council_room, feast, gardens, mine,	// Arbitrary cards
@@ -36,10 +41,11 @@ int main() {
 	
 	int treasure[2] = {-1, -1};	 // Holds last two cards drawn for treasure check
 
+
 	/* Set up game */
 	memset(&state, 23, sizeof(struct gameState)); // Clear data
 	if (initializeGame(MAX_PLAYERS, k, SEED, &state)) {	// Print error and exit if new game fails
-			printf("adventurer ABORT: initializeGame() exited with error.\n");
+			printf("great_hall ABORT: initializeGame() exited with error.\n");
 			return 1;
 	}
 	memcpy(&control, &state, sizeof(struct gameState));	// Save beginning game state	
@@ -47,12 +53,22 @@ int main() {
 	for (player = 0; player < MAX_PLAYERS; player++) {	// Run test for each player
 
 		/* Get and play adventurer */
-		drawCard(player, state);	// Draw a card
-		state.hand[player][state.handCount[player] - 1] = adventurer // Set most recently drawn card to adventurer
-		crashErrors += playCard(state.handCount[player] - 1, 0, 0, 0, &state);	// Play adventurer and check for error
+		state.whoseTurn = player;	
+		state.handCount[player] += 1;	// Create a card in hand
+		state.hand[player][state.handCount[player] - 1] = adventurer; // Set card in hand to adventurer
+		returnVal = playCard(state.handCount[player] - 1, 0, 0, 0, &state);	// Play adventurer and check for error
+		if (returnVal) {
+			if (VERBOSE) {
+				printf("great_hall: FAIL returned error %d\n", returnVal);
+			}
+			crashErrors++; 
+		}
 
 		/* Test outcome */
-		if (state.handCount[player] != control.handCount[player] + 1) { // Adventurer draws 2 when played, so +1 net to hand
+		if (state.handCount[player] != control.handCount[player] + 2) { // Adventurer draws 2, created adventurer, so +2 net to hand
+			if (VERBOSE) {
+				printf("adventurer: FAIL player %d hand contains %d cards -- expected %d\n", player + 1, state.handCount[player], control.handCount[player] + 2);
+			}
 			handCountErrors++;
 		}
 
@@ -70,6 +86,9 @@ int main() {
 		}
 
 		if ((state.deckCount[player] + state.discardCount[player]) != (control.deckCount[player] + control.discardCount[player] - 2)) {	// Adventurer draws 2, and puts non-treasures into discard, so two cards should be missing between deck and discard
+			if (VERBOSE) {
+				printf("adventurer: FAIL player %d deck + discard contain %d cards -- expected %d\n", player+1, state.deckCount[player] + state.discardCount[player], control.deckCount[player] + control.discardCount[player] - 2);
+			}
 			deckCountErrors++;
 		}
 
@@ -91,8 +110,8 @@ int main() {
 		memcpy(&state.playedCardCount, &control.playedCardCount, sizeof(int));	// playedCardCount
 		memcpy(state.playedCards, control.playedCards, sizeof(int) * MAX_DECK);	// playedCards
 
-		if (memcmp(control, state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
-			errors++;
+		if (memcmp(&control, &state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
+			boundErrors++;
 		}	
 		memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	
 	}
@@ -154,7 +173,7 @@ int main() {
 	totalErrors = crashErrors + handCountErrors + treasureErrors + deckCountErrors + playedCountErrors + playedErrors;
 
 	/* Display final results */
-	if (!totalErrors) {
+	if (!totalErrors){
 		printf("adventurer: ALL TESTS PASSED");
 	}
 

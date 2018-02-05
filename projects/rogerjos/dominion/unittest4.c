@@ -25,15 +25,31 @@ int main() {
 		discardCount,	// Counter for number of cards discarded
 		trashFlag,	// Tracks whether card is to be trashed
 		testHandCount = 10,
-		errors = 0,	// Counter for test failures
-		final = 0;	// Counter for final test result
+
+		// error counters 
+		errLowOnCount = 0,
+		errLowOnPile = 0,
+		errLowOffCount = 0,
+		errLowOffPile = 0,
+		errLowBound = 0,
+		errMidOnCount = 0,
+		errMidOnPile = 0,
+		errMidOffCount = 0,
+		errMidOffPile = 0,
+		errMidBound = 0,
+		errTopOnCount = 0,
+		errTopOnPile = 0,
+		errTopOffCount = 0,
+		errTopOffPile = 0,
+		errTopBound = 0,
+		errFinal = 0;	// Counter for final test result
 
 	int testHand[10] = {estate, duchy, province, copper, silver, gold, 
 						adventurer, council_room, feast, gardens};
 
 	memset(&control, 23, sizeof(struct gameState));	// Clear junk data
-	control.playedCardCount = 0;	// Reset played card count
-	for (player = 0; player < MAX_PLAYERS; player++) {	// Update all players
+	control.playedCardCount = 0;	// Required to avoid segfault due to discardCard() bug misdirecting cards.
+	for (player = 0; player < MAX_PLAYERS; player++) {	// Update all players' hand & discard
 		memcpy(control.hand[player], testHand, sizeof(int) * testHandCount);	// Give player a test hand
 		control.handCount[player] = testHandCount;	// Update player hand size
 		control.discardCount[player] = 0;	// Reset player discard count
@@ -47,7 +63,7 @@ int main() {
 			memcpy(&state, &control, sizeof(struct gameState));
 			discardCount = 0;
 
-			/* Test discarding last card in hand */
+			/* Test discarding top card in hand */
 			for (i = 1; i <= testHandCount; i++) {	// While hand is not empty
 				discarded = state.hand[player][testHandCount - i];
 				discardCard(state.handCount[player] - 1, player, &state, trashFlag);	// Discard the last card in hand
@@ -56,47 +72,34 @@ int main() {
 					discardCount++;
 					if (state.discardCount[player] != discardCount) {
 						if (VERBOSE) {
-							printf("discardCard(): FAIL game state discardCount not incremented with trashFlag off\n");
+							printf("discardCard(): FAIL player %d discardCount is %d -- expected %d (trashFlag %d)\n", player + 1, state.discardCount[player], discardCount, trashFlag);
 						}
 						state.discardCount[player] = discardCount;	// Correct game state variable
-						errors++;
+						errTopOffCount++;
 					}
-					else if (VERBOSE) { 
-						printf("discardCard(): PASS game state discardCount incremented with trashFlag off\n");
-					}	
 					
 					if (state.discard[player][state.discardCount[player] - 1] != discarded) {	// Check discard pile if trashFlag is off
 						if (VERBOSE) {
 							printf("discardCard(): FAIL discarded card not copied to player discard array with trashFlag on\n");
 						}
-						errors++;
+						errTopOffPile++;
 					}
-					else if (VERBOSE) { 
-						printf("discardCard(): PASS discarded card copied to player discard array with trashFlag on\n");
-					}	
 				}
 				else {	// Check discard count if trashFlag is on					
 					if (state.discardCount[player] > discardCount) {
 						if (VERBOSE) {
-							printf("discardCard(): FAIL game state discardCount incremented with trashFlag on\n");
+							printf("discardCard(): FAIL player %d discardCount is %d -- expected %d (trashFlag %d)\n", player + 1, state.discardCount[player], discardCount, trashFlag);
 						}
-						errors++;
+						errTopOnCount++;
 						state.discardCount[player] = discardCount;	// Correct game state variable
 					}
-					else if (VERBOSE) { 
-						printf("discardCard(): PASS game state discardCount not incremented with trashFlag on\n");
-					}	
 					
 					if (state.discard[player][state.discardCount[player] - 1] == discarded) {	// Check discard pile if trashFlag on
 						if (VERBOSE) {
 							printf("discardCard(): FAIL discarded card copied to player discard array with trashFlag on\n");
 						}
-						errors++;
+						errTopOnPile++;
 					}
-					else if (VERBOSE) { 
-						printf("discardCard(): PASS discarded card not copied to player discard array with trashFlag on\n");
-					}	
-
 				}	
 			}
 			
@@ -109,24 +112,11 @@ int main() {
 				if (VERBOSE) {
 					printf("discardCard(): FAIL Out of bound changes made to game state struct.\n");
 				}
-				errors++;
-			}
-			else if (VERBOSE) {
-				printf("discardCard(): PASS No out of bound changes made to game state struct.\n");
+				errTopBound++;
 			}
 		}
 	}
 
-	/* Display results discard last card */
-	printf("discardCard(): ");
-	if (errors) {
-		printf("FAIL when discarding highest index card.\n");
-		final += errors;
-		errors = 0;
-	} 
-	else {
-		printf("PASS when discarding highest index card.\n");
-	}
 
 	/* Test discarding first card in hand */
 	for (trashFlag = 0; trashFlag < 2; trashFlag++) {	// Test both trashed and untrashed discards
@@ -147,46 +137,34 @@ int main() {
 					discardCount++;
 					if (state.discardCount[player] != discardCount) {
 						if (VERBOSE) {
-							printf("discardCard(): FAIL game state discardCount not incremented with trashFlag off\n");
+							printf("discardCard(): FAIL player %d discardCount is %d -- expected %d (trashFlag %d)\n", player + 1, state.discardCount[player], discardCount, trashFlag);
 						}
 						state.discardCount[player] = discardCount;	// Correct game state variable
-						errors++;
+						errLowOffCount++;
 					}
-					else if (VERBOSE) { 
-						printf("discardCard(): PASS game state discardCount incremented with trashFlag off\n");
-					}	
 					
 					if (state.discard[player][state.discardCount[player] - 1] != discarded) {	// Check discard pile if trashFlag is off
 						if (VERBOSE) {
 							printf("discardCard(): FAIL discarded card not copied to player discard array with trashFlag on\n");
 						}
-						errors++;
+						errLowOffPile++;
 					}
-					else if (VERBOSE) { 
-						printf("discardCard(): PASS discarded card copied to player discard array with trashFlag on\n");
-					}	
 				}
 				else {	// Check discard count if trashFlag is on					
 						if (state.discardCount[player] > discardCount) {
 						if (VERBOSE) {
-							printf("discardCard(): FAIL game state discardCount incremented with trashFlag on\n");
+							printf("discardCard(): FAIL player %d discardCount is %d -- expected %d (trashFlag %d)\n", player + 1, state.discardCount[player], discardCount, trashFlag);
 						}
-						errors++;
+						errLowOnCount++;
 						state.discardCount[player] = discardCount;	// Correct game state variable
 					}
-					else if (VERBOSE) { 
-						printf("discardCard(): PASS game state discardCount not incremented with trashFlag on\n");
-					}	
 					
 					if (state.discard[player][state.discardCount[player] - 1] == discarded) {	// Check discard pile if trashFlag on
 						if (VERBOSE) {
 							printf("discardCard(): FAIL discarded card copied to player discard array with trashFlag on\n");
 						}
-						errors++;
+						errLowOnPile++;
 					}
-					else if (VERBOSE) { 
-						printf("discardCard(): PASS discarded card not copied to player discard array with trashFlag on\n");
-					}	
 				}
 			}
 			
@@ -199,25 +177,11 @@ int main() {
 				if (VERBOSE) {
 					printf("discardCard(): FAIL Out of bound changes made to game state struct.\n");
 				}
-				errors++;
+				errLowBound++;
 			}
-			else if (VERBOSE) {
-				printf("discardCard(): PASS No out of bound changes made to game state struct.\n");
-			}
-
 		}
 	}
 
-	/* Display results discard last card */
-	printf("discardCard(): ");
-	if (errors) {
-		printf("FAIL when discarding lowest index card.\n");
-		final += errors;
-		errors = 0;
-	} 
-	else {
-		printf("PASS when discarding lowest index card.\n");
-	}
 
 	/* Test discarding mid index card in */
 	for (trashFlag = 0; trashFlag < 2; trashFlag++) {	// Test both trashed and untrashed discards
@@ -237,47 +201,34 @@ int main() {
 					discardCount++;
 					if (state.discardCount[player] != discardCount) {
 						if (VERBOSE) {
-							printf("discardCard(): FAIL game state discardCount not incremented with trashFlag off\n");
+							printf("discardCard(): FAIL player %d discardCount is %d -- expected %d (trashFlag %d)\n", player + 1, state.discardCount[player], discardCount, trashFlag);
 						}
 						state.discardCount[player] = discardCount;	// Correct game state variable
-						errors++;
+						errMidOffCount++;
 					}
-					else if (VERBOSE) { 
-						printf("discardCard(): PASS game state discardCount incremented with trashFlag off\n");
-					}	
 					
 					if (state.discard[player][state.discardCount[player] - 1] != discarded) {	// Check discard pile if trashFlag is off
 						if (VERBOSE) {
 							printf("discardCard(): FAIL discarded card not copied to player discard array with trashFlag on\n");
 						}
-						errors++;
+						errMidOffPile++;
 					}
-					else if (VERBOSE) { 
-						printf("discardCard(): PASS discarded card copied to player discard array with trashFlag on\n");
-					}	
 				}
 				else {	// Check discard count if trashFlag is on					
 						if (state.discardCount[player] > discardCount) {
 						if (VERBOSE) {
 							printf("discardCard(): FAIL game state discardCount incremented with trashFlag on\n");
 						}
-						errors++;
+						errMidOnCount++;
 						state.discardCount[player] = discardCount;	// Correct game state variable
 					}
-					else if (VERBOSE) { 
-						printf("discardCard(): PASS game state discardCount not incremented with trashFlag on\n");
-					}	
 					
 					if (state.discard[player][state.discardCount[player] - 1] == discarded) {	// Check discard pile if trashFlag on
 						if (VERBOSE) {
 							printf("discardCard(): FAIL discarded card copied to player discard array with trashFlag on\n");
 						}
-						errors++;
+						errMidOnPile++;
 					}
-					else if (VERBOSE) { 
-						printf("discardCard(): PASS discarded card not copied to player discard array with trashFlag on\n");
-					}	
-
 				}	
 			}
 			
@@ -290,26 +241,164 @@ int main() {
 				if (VERBOSE) {
 					printf("discardCard(): FAIL Out of bound changes made to game state struct.\n");
 				}
-				errors++;
-			}
-			else if (VERBOSE) {
-				printf("discardCard(): PASS No out of bound changes made to game state struct.\n");
+				errMidBound++;
 			}
 		}
 	}	
 
-	/* Display results discard mid card */
+
+	/* Display Results */
+	// LOW
 	printf("discardCard(): ");
-	if (errors) {
-		printf("FAIL when discarding mid index card.\n");
-		final += errors;
-	} 
-	else {
-		printf("PASS when discarding mid index card.\n");
+	if (errLowOffCount) {
+		printf("FAIL");
 	}
+	else {
+		printf("PASS");
+	}
+	printf(" discard count incremented when discarding low index cards in hand\n");
+
+
+	printf("discardCard(): ");
+	if (errLowOffPile) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" discard pile updated when discarding low index cards in hand\n");
+
+
+	printf("discardCard(): ");
+	if (errLowOnCount) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" discard count not incremented when trashing low index cards in hand\n");
+
+
+	printf("discardCard(): ");
+	if (errLowOnPile) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" discard pile not updated when trashing low index cards in hand\n");
+
+	printf("discardCard(): ");
+	if (errLowBound) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" unrelated game state members unchanged when selecting low index cards in hand\n");
+
+	// MID
+	printf("discardCard(): ");
+	if (errMidOffCount) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" discard count incremented when discarding mid index cards in hand\n");
+
+
+	printf("discardCard(): ");
+	if (errMidOffPile) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" discard pile updated when discarding mid index cards in hand\n");
+
+
+	printf("discardCard(): ");
+	if (errMidOnCount) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" discard count not incremented when trashing mid index cards in hand\n");
+
+
+	printf("discardCard(): ");
+	if (errMidOnPile) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" discard pile not updated when trashing mid index cards in hand\n");
+
+	printf("discardCard(): ");
+	if (errMidBound) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" unrelated game state members unchanged when selecting mid index cards in hand\n");
+
+	// TOP
+	printf("discardCard(): ");
+	if (errTopOffCount) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" discard count incremented when discarding top index cards in hand\n");
+
+
+	printf("discardCard(): ");
+	if (errTopOffPile) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" discard pile updated when discarding top index cards in hand\n");
+
+
+	printf("discardCard(): ");
+	if (errTopOnCount) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" discard count not incremented when trashing top index cards in hand\n");
+
+
+	printf("discardCard(): ");
+	if (errTopOnPile) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" discard pile not updated when trashing top index cards in hand\n");
+
+	printf("discardCard(): ");
+	if (errTopBound) {
+		printf("FAIL");
+	}
+	else {
+		printf("PASS");
+	}
+	printf(" unrelated game state members unchanged when selecting top index cards in hand\n");
+
+	errFinal = errLowOnCount + errLowOnPile + errLowOffCount + errLowOffPile + errLowBound + errMidOnCount + errMidOnPile + errMidOffCount + errMidOffPile + errMidBound + errTopOnCount + errTopOnPile + errTopOffCount + errTopOffPile + errTopBound;
 
 	/* Display final results */
-	if (!final) {
+	if (!errFinal) {
 		printf("discardCard(): ALL TESTS PASSED.\n");
 	}
 

@@ -13,6 +13,9 @@
 #include <stdio.h>
 #include <string.h>
 
+// VERBOSE triggers extra error messages. =0 off, else on
+#define VERBOSE 0
+
 #define SEED 23
 
 int main() {
@@ -20,14 +23,16 @@ int main() {
 					 control;	// For detecting and reverting state changes
 
 	int	player,
+		returnVal,
 		crashErrors = 0,	// Counter for great_hall returning errors
-		handCountErrors = 0,	// Counter for test failures
-		drawnCardErrors = 0;
-		deckCountErrors = 0,	// Counter for test failures
-		playedCountErrors = 0,	// Counter for test failures
-		playedErrors = 0,	// Counter for test failures
+		handCountErrors = 0,	
+		drawnCardErrors = 0,
+		deckCountErrors = 0,	
+		playedCountErrors = 0,	
+		playedErrors = 0,	
 		numActionsErrors = 0,
-
+		boundErrors = 0,
+		totalErrors = 0;
 	int k[10] = {adventurer, council_room, feast, gardens, mine,	// Arbitrary cards
 					remodel, village, minion, baron, cutpurse};	// No great_hall to ensure great_hall not drawn
 
@@ -42,12 +47,22 @@ int main() {
 	for (player = 0; player < MAX_PLAYERS; player++) {	// Run test for each player
 
 		/* Get and play great_hall */
-		drawCard(player, state);	// Draw a card
-		state.hand[player][state.handCount[player] - 1] = great_hall // Set most recently drawn card to great_hall
-		crashErrors += playCard(state.handCount[player] - 1, 0, 0, 0, &state);	// Play great_hall and check for error
+		state.whoseTurn = player;	
+		state.handCount[player] += 1;	// Create a card in hand
+		state.hand[player][state.handCount[player] - 1] = great_hall; // Set card in hand to great_hall
+		returnVal = playCard(state.handCount[player] - 1, 0, 0, 0, &state);	// Play great_hall and check for error
+		if (returnVal) {
+			if (VERBOSE) {
+				printf("great_hall: FAIL returned error %d\n", returnVal);
+			}
+			crashErrors++; 
+		}
 
 		/* Test outcome */
-		if (state.handCount[player] != control.handCount[player]) { // Great_hall draws 1 when played, so no net draw
+		if (state.handCount[player] != control.handCount[player] + 1) { // Great_hall draws 1 when played, drew great_hall, net + 1
+			if (VERBOSE) {
+				printf("great_hall: FAIL player %d hand count is %d -- expected %d\n", player+1, state.handCount[player], control.handCount[player] + 1);
+			}
 			handCountErrors++;
 		}
 
@@ -67,8 +82,8 @@ int main() {
 			playedErrors++;
 		}
 
-		if (state.numActions != control.numActions + 1) {	// Great_hall +1 action, so action cound should be control+1
-			numActionsError++;
+		if (state.numActions != control.numActions) {	// Great_hall +1 action, one action used, so action count unchanged
+			numActionsErrors++;
 		}
 
 		/* Revert expected affected members */
@@ -83,8 +98,8 @@ int main() {
 		memcpy(&state.numActions, &control.numActions, sizeof(int));	// numActions
 		
 
-		if (memcmp(control, state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
-			errors++;
+		if (memcmp(&control, &state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
+			boundErrors++;
 		}	
 
 		memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	
@@ -153,8 +168,19 @@ int main() {
 		printf("PASS action count incremented\n");
 	}
 
+	/* Display results for boundary errors */
+	printf("great_hall: ");
+	if (boundErrors) {
+		printf("FAIL no unexpected modifications to game state\n");
+	}
+	else {
+		printf("PASS no unexpected modifications to game state\n");
+	}
+
+	totalErrors = crashErrors + handCountErrors + drawnCardErrors + deckCountErrors + playedCountErrors + playedErrors + numActionsErrors + boundErrors;
+
 	/* Display final results */
-	if (!(crashErrors || handCountErrors || drawnCardErrors || deckCountErrors || playedCountErrors || playedErrors || numActionsErrors)){
+	if (!totalErrors){
 		printf("great_hall: ALL TESTS PASSED");
 	}
 

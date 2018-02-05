@@ -67,6 +67,16 @@ runUnitTests: unittest1 unittest2 unittest3 unittest4
 	echo -e "\nunittest4.c:" >> unittestresult.out
 	./unittest4 &>> unittestresult.out
 
+runCardTests: cardtest1 cardtest2 cardtest3 cardtest4
+	echo "cardtest1.c:" > cardtestresult.out
+	./cardtest1 &>> cardtestresult.out
+	echo -e "\ncardtest2.c:" >> cardtestresult.out
+	./cardtest2 &>> cardtestresult.out
+	echo -e "\ncardtest3.c:" >> cardtestresult.out
+	./cardtest3 &>> cardtestresult.out
+	echo -e "\ncardtest4.c:" >> cardtestresult.out
+	./cardtest4 &>> cardtestresult.out
+
 #gcov dominion.c >> unittestresult.out
 #	cat dominion.c.gcov >> unittestresult.out
 

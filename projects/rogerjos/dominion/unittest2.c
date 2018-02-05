@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Program: unittest1.c
+ * Program: unittest2.c
  * Author: Joshua L. Rogers
  * Date: 4 Feb 2018
  * Course: CS362

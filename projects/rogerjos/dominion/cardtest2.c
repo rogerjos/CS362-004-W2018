@@ -13,6 +13,9 @@
 #include <stdio.h>
 #include <string.h>
 
+// Verbose output switch. non-zeo = verbose
+#define VERBOSE 0
+
 #define SEED 23
 
 int main() {
@@ -20,6 +23,7 @@ int main() {
 					 control;	// For detecting and reverting state changes
 
 	int	player,
+		returnVal,
 		crashErrors = 0,	// Counter for village returning errors
 		handCountErrors = 0,	// Counter for test failures
 		drawnCardErrors = 0,
@@ -35,6 +39,8 @@ int main() {
 
 	/* Set up game */
 	memset(&state, 23, sizeof(struct gameState)); // Clear data
+//	state.phase = 0;	// prevent playCard() error
+//	state.numActions = 1;	// prevent playCard() error
 	if (initializeGame(MAX_PLAYERS, k, SEED, &state)) {	// Print error and exit if new game fails
 			printf("village ABORT: initializeGame() exited with error.\n");
 			return 1;
@@ -44,12 +50,22 @@ int main() {
 	for (player = 0; player < MAX_PLAYERS; player++) {	// Run test for each player
 
 		/* Get and play village */
-		drawCard(player, &state);	// Draw a card
-		state.hand[player][state.handCount[player] - 1] = village; // Set most recently drawn card to village
-		crashErrors += playCard(state.handCount[player] - 1, 0, 0, 0, &state);	// Play village and check for error
+		state.whoseTurn = player;	// This should not be necessary. Terrible design!
+		state.handCount[player] += 1;	// Create a card in hand
+		state.hand[player][state.handCount[player] - 1] = village; // Set card in hand to village
+		returnVal = playCard(state.handCount[player] - 1, 0, 0, 0, &state);	// Play village and check for error
+		if (returnVal) {
+			if (VERBOSE) {
+				printf("village: FAIL returned error %d\n", returnVal);
+			}
+			crashErrors++; 
+		}
 
 		/* Test outcome */
-		if (state.handCount[player] != control.handCount[player]) { // Village draws 1 when played, so no net draw
+		if (state.handCount[player] != control.handCount[player] + 1) { // Village draws 1 when played, drew village, net +1 card
+			if (VERBOSE) {
+				printf("village: FAIL player %d hand count is %d -- expected %d\n", player+1, state.handCount[player], control.handCount[player] + 1);
+			}		
 			handCountErrors++;
 		}
 
@@ -69,7 +85,10 @@ int main() {
 			playedErrors++;
 		}
 
-		if (state.numActions != control.numActions + 2) {	// Village +2 actions, so action cound should be control+2
+		if (state.numActions != control.numActions + 1) {	// Village +2 actions, spent 1, action count should be control + 1
+			if (VERBOSE) {
+				printf("village: FAIL action count is %d -- expected %d\n", state.numActions, control.numActions + 2);
+			}	
 			numActionsErrors++;
 		}
 
@@ -167,12 +186,6 @@ int main() {
 
 	/* Display final results */
 	if (!totalErrors){
-		printf("village: ALL TESTS PASSED");
-	}
-
-
-	/* Display final results */
-	if (!(crashErrors || handCountErrors || drawnCardErrors || deckCountErrors || playedCountErrors || playedErrors || numActionsErrors)){
 		printf("village: ALL TESTS PASSED");
 	}
 
