@@ -1,0 +1,102 @@
+Result for running Dominion unit tests:
+
+unittest1.c:
+updateCoins(): PASS coin combination values as expected
+updateCoins(): PASS no out of bound modifications to game state
+updateCoins(): ALL TESTS PASSED.
+Lines executed:100.00% of 11
+No branches
+No calls
+
+unittest2.c:
+isGameOver(): PASS when no supply piles empty.
+isGameOver(): PASS when one supply pile empty.
+isGameOver(): PASS when two supply piles empty.
+isGameOver(): PASS when three supply piles empty.
+isGameOver(): PASS when four supply piles empty.
+isGameOver(): PASS when all supply piles empty.
+isGameOver(): ALL TESTS PASSED.
+Lines executed:100.00% of 10
+No branches
+No calls
+
+unittest3.c:
+shuffle(): PASS when shuffling 27 card decks.
+shuffle(): PASS when shuffling 10 card decks.
+shuffle(): PASS when shuffling 0 card decks.
+shuffle(): ALL TESTS PASSED.
+Lines executed:100.00% of 16
+No branches
+No calls
+
+unittest4.c:
+discardCard(): FAIL discard count incremented when discarding low index cards in hand
+discardCard(): FAIL discard pile updated when discarding low index cards in hand
+discardCard(): PASS discard count not incremented when trashing low index cards in hand
+discardCard(): PASS discard pile not updated when trashing low index cards in hand
+discardCard(): FAIL unrelated game state members unchanged when selecting low index cards in hand
+discardCard(): FAIL discard count incremented when discarding mid index cards in hand
+discardCard(): FAIL discard pile updated when discarding mid index cards in hand
+discardCard(): PASS discard count not incremented when trashing mid index cards in hand
+discardCard(): PASS discard pile not updated when trashing mid index cards in hand
+discardCard(): FAIL unrelated game state members unchanged when selecting mid index cards in hand
+discardCard(): FAIL discard count incremented when discarding top index cards in hand
+discardCard(): FAIL discard pile updated when discarding top index cards in hand
+discardCard(): PASS discard count not incremented when trashing top index cards in hand
+discardCard(): PASS discard pile not updated when trashing top index cards in hand
+discardCard(): FAIL unrelated game state members unchanged when selecting top index cards in hand
+Lines executed:92.31% of 13
+No branches
+No calls
+
+cardtest1.c:
+smithy: PASS does not return error
+smithy: PASS draws three cards into correct hand
+smithy: PASS draws three cards from correct deck
+smithy: FAIL played card count incremented
+smithy: FAIL placed on top of played card pile
+smithy: PASS no unexpected modifications to game state
+Lines executed:4.37% of 206
+No branches
+No calls
+
+cardtest2.c:
+village: PASS does not return error
+village: PASS draws card into correct hand
+village: PASS drawn card not village
+village: PASS draws card from correct deck
+village: PASS played card count incremented
+village: PASS placed on top of played card pile
+village: PASS action count increased by two
+village: PASS no unexpected modifications to game state
+village: ALL TESTS PASSED
+Lines executed:4.85% of 206
+No branches
+No calls
+
+cardtest3.c:
+great_hall: PASS does not return error
+great_hall: PASS draws card into correct hand
+great_hall: PASS drawn card not great_hall
+great_hall: PASS draws card from correct deck
+great_hall: PASS played card count incremented
+great_hall: PASS placed on top of played card pile
+great_hall: PASS action count incremented
+great_hall: PASS no unexpected modifications to game state
+great_hall: ALL TESTS PASSED
+Lines executed:6.80% of 206
+No branches
+No calls
+
+cardtest4.c:
+adventurer: PASS does not return error
+adventurer: FAIL draws two cards into correct hand
+adventurer: PASS cards drawn both treasures
+adventurer: FAIL two cards removed from correct deck + discard
+adventurer: FAIL played card count incremented
+adventurer: FAIL placed on top of played card pile
+adventurer: PASS no unexpected modifications to game state
+Lines executed:7.28% of 206
+No branches
+No calls
+
