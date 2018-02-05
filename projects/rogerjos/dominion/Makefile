@@ -57,30 +57,38 @@ cardtest3: cardtest3.c dominion.o rngs.o
 cardtest4: cardtest4.c dominion.o rngs.o
 	gcc -o cardtest4 -g cardtest4.c dominion.o rngs.o $(CFLAGS)
 
-runUnitTests: unittest1 unittest2 unittest3 unittest4
-	echo "unittest1.c:" > unittestresult.out
-	./unittest1 &>> unittestresult.out
-	echo -e "\nunittest2.c:" >> unittestresult.out
-	./unittest2 &>> unittestresult.out
-	echo -e "\nunittest3.c:" >> unittestresult.out
-	./unittest3 &>> unittestresult.out
-	echo -e "\nunittest4.c:" >> unittestresult.out
-	./unittest4 &>> unittestresult.out
+unittestresults.out: unittest1 unittest2 unittest3 unittest4 cardtest1 cardtest2 cardtest3 cardtest4
+	# gcov piped to sed from Piazza @87. My thanks to cas donoghue. sed is great!
+	echo -e "Result for running Dominion unit tests:\n" > unittestresults.out
+	echo "unittest1.c:" >> unittestresults.out
+	./unittest1 &>> unittestresults.out
+	gcov -abcfu dominion.c | sed -n '/updateCoins/{n;p; n;p; n;p; n;p}' >> unittestresults.out
+	echo "unittest2.c:" >> unittestresults.out
+	./unittest2 &>> unittestresults.out
+	gcov -abcfu dominion.c | sed -n '/isGameOver/{n;p; n;p; n;p; n;p}' >> unittestresults.out
+	echo "unittest3.c:" >> unittestresults.out
+	./unittest3 &>> unittestresults.out
+	gcov -abcfu dominion.c | sed -n '/shuffle/{n;p; n;p; n;p; n;p}' >> unittestresults.out
+	echo "unittest4.c:" >> unittestresults.out
+	./unittest4 &>> unittestresults.out
+	gcov -abcfu dominion.c | sed -n '/discardCard/{n;p; n;p; n;p; n;p}' >> unittestresults.out
+	# It was unclear whether card tests were supposed to be included herein, 
+	# so I erred on the side of caution. The coverage information isn't especially 
+	# useful for card tests, but I included it anyway. 
+	echo "cardtest1.c:" >> unittestresults.out
+	./cardtest1 &>> unittestresults.out
+	gcov -abcfu dominion.c | sed -n '/cardEffect/{n;p; n;p; n;p; n;p}' >> unittestresults.out
+	echo "cardtest2.c:" >> unittestresults.out
+	./cardtest2 &>> unittestresults.out
+	gcov -abcfu dominion.c | sed -n '/cardEffect/{n;p; n;p; n;p; n;p}' >> unittestresults.out
+	echo "cardtest3.c:" >> unittestresults.out
+	./cardtest3 &>> unittestresults.out
+	gcov -abcfu dominion.c | sed -n '/cardEffect/{n;p; n;p; n;p; n;p}' >> unittestresults.out
+	echo "cardtest4.c:" >> unittestresults.out
+	./cardtest4 &>> unittestresults.out
+	gcov -abcfu dominion.c | sed -n '/cardEffect/{n;p; n;p; n;p; n;p}' >> unittestresults.out
 
-runCardTests: cardtest1 cardtest2 cardtest3 cardtest4
-	echo "cardtest1.c:" > cardtestresult.out
-	./cardtest1 &>> cardtestresult.out
-	echo -e "\ncardtest2.c:" >> cardtestresult.out
-	./cardtest2 &>> cardtestresult.out
-	echo -e "\ncardtest3.c:" >> cardtestresult.out
-	./cardtest3 &>> cardtestresult.out
-	echo -e "\ncardtest4.c:" >> cardtestresult.out
-	./cardtest4 &>> cardtestresult.out
-
-#gcov dominion.c >> unittestresult.out
-#	cat dominion.c.gcov >> unittestresult.out
-
-all: playdom player testDrawCard testBuyCard badTestDrawCard
+all: playdom player testDrawCard testBuyCard badTestDrawCard unittestresults.out
 
 clean:
 	rm -f *.o playdom.exe playdom player player.exe  *.gcov *.gcda *.gcno *.so *.out testDrawCard testDrawCard.exe badTestDrawCard badTestDrawCard.exe unittest1 unittest2 unittest3 unittest4 cardtest1 cardtest2 cardtest3 cardtest4

@@ -109,6 +109,10 @@ int main() {
 		memcpy(state.discard[player], control.discard[player], sizeof(int) * MAX_DECK);		// discard
 		memcpy(&state.playedCardCount, &control.playedCardCount, sizeof(int));	// playedCardCount
 		memcpy(state.playedCards, control.playedCards, sizeof(int) * MAX_DECK);	// playedCards
+		memcpy(&state.numActions, &control.numActions, sizeof(int));	// numActions
+		memcpy(&state.coins, &control.coins, sizeof(int));	// revert coins
+		memcpy(&state.whoseTurn, &control.whoseTurn, sizeof(int));	// revert turn
+	
 
 		if (memcmp(&control, &state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
 			boundErrors++;
@@ -170,7 +174,16 @@ int main() {
 		printf("PASS placed on top of played card pile\n");
 	}
 
-	totalErrors = crashErrors + handCountErrors + treasureErrors + deckCountErrors + playedCountErrors + playedErrors;
+	/* Display results for boundary errors */
+	printf("adventurer: ");
+	if (boundErrors) {
+		printf("FAIL no unexpected modifications to game state\n");
+	}
+	else {
+		printf("PASS no unexpected modifications to game state\n");
+	}
+
+	totalErrors = crashErrors + handCountErrors + treasureErrors + deckCountErrors + playedCountErrors + playedErrors + boundErrors;
 
 	/* Display final results */
 	if (!totalErrors){

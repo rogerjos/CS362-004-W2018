@@ -101,10 +101,11 @@ int main() {
 		memcpy(&state.playedCardCount, &control.playedCardCount, sizeof(int));	// playedCardCount
 		memcpy(state.playedCards, control.playedCards, sizeof(int) * MAX_DECK);	// playedCards
 		memcpy(&state.phase, &control.phase, sizeof(int));	// phase
-		memcpy(&state.numActions, &control.numActions, sizeof(int));	// playedCardCount
-		memcpy(&state.whoseTurn, &control.whoseTurn, sizeof(int));	// whoseTurn
+		memcpy(&state.numActions, &control.numActions, sizeof(int));	// revert actions 
+		memcpy(&state.coins, &control.coins, sizeof(int));	// revert coins
+		memcpy(&state.whoseTurn, &control.whoseTurn, sizeof(int));	// revert turn
 
-		if (memcmp(&control, &state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
+			if (memcmp(&control, &state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
 			boundErrors++;
 		}	
 		memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	

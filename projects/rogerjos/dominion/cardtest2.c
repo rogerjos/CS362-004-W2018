@@ -101,11 +101,25 @@ int main() {
 		memcpy(state.discard[player], control.discard[player], sizeof(int) * MAX_DECK);		// discard
 		memcpy(&state.playedCardCount, &control.playedCardCount, sizeof(int));	// playedCardCount
 		memcpy(state.playedCards, control.playedCards, sizeof(int) * MAX_DECK);	// playedCards
-		memcpy(&state.numActions, &control.numActions, sizeof(int));	// numActions
+		memcpy(&state.numActions, &control.numActions, sizeof(int));	// revert numActions
+		memcpy(&state.coins, &control.coins, sizeof(int));	// revert coins
+		memcpy(&state.whoseTurn, &control.whoseTurn, sizeof(int));	// revert turn
 		
 
 		if (memcmp(&control, &state, sizeof(struct gameState))) {	// Check for out of bound changes to game state 	
 			boundErrors++;
+			if (VERBOSE) {
+				printf("DANGER: MEMCMP FAILED!\n");
+				printf("numPlayers\tstate -> %d %d <- control\n", state.numPlayers, control.numPlayers);
+				printf("outpostPlayed\tstate -> %d %d <- control\n", state.outpostPlayed, control.outpostPlayed);
+				printf("outpostTurn\tstate -> %d %d <- control\n", state.outpostTurn, control.outpostTurn);
+				printf("whoseTurn\tstate -> %d %d <- control\n", state.whoseTurn, control.whoseTurn);
+				printf("phase\tstate -> %d %d <- control\n", state.phase, control.phase);
+				printf("numActions\tstate -> %d %d <- control\n", state.numActions, control.numActions);
+				printf("coins\tstate -> %d %d <- control\n", state.coins, control.coins);
+				printf("numBuys\tstate -> %d %d <- control\n", state.numBuys, control.numBuys);
+				printf("playedCardCount\tstate -> %d %d <- control\n", state.playedCardCount, control.playedCardCount);
+			}
 		}	
 		memcpy(&state, &control, sizeof(struct gameState));	//Revert to beginning game state	
 	}
@@ -186,7 +200,7 @@ int main() {
 
 	/* Display final results */
 	if (!totalErrors){
-		printf("village: ALL TESTS PASSED");
+		printf("village: ALL TESTS PASSED\n");
 	}
 
 	return 0;
