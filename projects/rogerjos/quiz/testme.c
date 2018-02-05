@@ -15,14 +15,12 @@ char inputChar()
 
 char *inputString()
 {
-	static char searchSet[] = "rest";	// potential chars
+	static char searchSet[] = "rest\0";	// potential chars
 	char result[6];	// assemble string here
 	int key, i;	// random key and counter
 	
-	memset(result, '\0', 6);	// Set all chars in string to null term '\0'
-
-	for (i = 0; i < 5; i++) {
-		key = rand() % 4;	// random in [0,3]
+	for (i = 0; i < 6; i++) {
+		key = rand() % 5;	// random in [0,4]
 		result[i] = searchSet[key]; // put a random char from searchSet into result
 	} 
 
