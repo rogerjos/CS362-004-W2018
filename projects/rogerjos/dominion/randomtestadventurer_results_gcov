@@ -1,0 +1,68 @@
+function adventurerEffect called 10000 returned 100% blocks executed 100%
+    10000: 1168:int adventurerEffect(struct gameState *state, int currentPlayer, int *temphand, int *z)
+    10000: 1168-block  0
+        -: 1169:{	/* Adventurer draws until two treasure cards drawn,
+        -: 1170:       then discards all non-treasure cards drawn.  */
+        -: 1171:
+        -: 1172:	int cardDrawn;
+    10000: 1173:	int drawnTreasure = 0;
+        -: 1174:
+   122451: 1175:  while(drawnTreasure < 2)
+    10000: 1175-block  0
+unconditional  0 taken 10000
+   122451: 1175-block  1
+branch  1 taken 112451
+branch  2 taken 10000 (fallthrough)
+        -: 1176:  {
+   112451: 1177:    if (state->deckCount[currentPlayer] < 1)
+   112451: 1177-block  0
+branch  0 taken 1047 (fallthrough)
+branch  1 taken 111404
+        -: 1178:    { //shuffle discard into deck if out of cards
+     1047: 1179:      shuffle(currentPlayer, state);
+     1047: 1179-block  0
+call    0 returned 1047
+unconditional  1 taken 1047
+        -: 1180:    }
+   112451: 1181:    drawCard(currentPlayer, state);
+   112451: 1181-block  0
+call    0 returned 112451
+   112451: 1182:    cardDrawn = state->hand[currentPlayer][state->handCount[currentPlayer]-1]; //top card of hand is most recently drawn card.
+   112451: 1183:    if (cardDrawn == copper || cardDrawn == silver || cardDrawn == gold)
+branch  0 taken 105611 (fallthrough)
+branch  1 taken 6840
+   105611: 1183-block  0
+branch  2 taken 98950 (fallthrough)
+branch  3 taken 6661
+    98950: 1183-block  1
+branch  4 taken 6499 (fallthrough)
+branch  5 taken 92451
+        -: 1184:    {
+    20000: 1185:      drawnTreasure++;
+    20000: 1185-block  0
+unconditional  0 taken 20000
+        -: 1186:    }
+        -: 1187:    else
+        -: 1188:    {
+    92451: 1189:      temphand[*z]=cardDrawn; // put non-treasure card drwn into temp hand
+    92451: 1190:      state->handCount[currentPlayer]--; // remove non-treasure card drawn from player hand
+    92451: 1191:      *z++; // increment count of cards in temp hand
+    92451: 1191-block  0
+unconditional  0 taken 92451
+        -: 1192:    }
+        -: 1193:  }
+    10785: 1194:    while(*z-1>0)
+    10000: 1194-block  0
+unconditional  0 taken 10000
+    10785: 1194-block  1
+branch  1 taken 785
+branch  2 taken 10000 (fallthrough)
+        -: 1195:    { // while temp hand still contains non-treasure cards drawn with adventurer
+      785: 1196:      state->discard[currentPlayer][state->discardCount[currentPlayer]++]=temphand[*z-1]; // discard from temp hand
+      785: 1197:      *z--; // decrement count of cards in temp hand
+      785: 1197-block  0
+unconditional  0 taken 785
+        -: 1198:    }
+    10000: 1199:    return 0;
+    10000: 1199-block  0
+unconditional  0 taken 10000

@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include "dominion.h"
 #include "dominion_helpers.h"
 #include "rngs.h"
@@ -63,6 +64,10 @@ int printResults(char *fut, unsigned long int caseCount, int testCount, int *err
 
 
 int main(int argc, char *argv[]) {
+
+	time_t	stop_time,
+			start_time = time(NULL);
+		
 	unsigned long int iterations;
 
 	int	i = 0, 
@@ -120,7 +125,11 @@ int main(int argc, char *argv[]) {
 
 	// Print aggregate results
 	printResults("Adventurer", iterations, 7, err, testMsg);
-	
+
+	// Append runtime.
+	stop_time = time(NULL);
+	printf("%s runtime: %fs\n", argv[0], difftime(stop_time, start_time));
+
 	return 0;
 }
 

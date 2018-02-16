@@ -1,0 +1,18 @@
+function villageEffect called 10000 returned 100% blocks executed 100%
+    10000: 1239:int villageEffect(struct gameState *state, int currentPlayer, int handPos)
+    10000: 1239-block  0
+        -: 1240:{
+        -: 1241:  //+1 card
+    10000: 1242:  drawCard(currentPlayer, state);
+    10000: 1242-block  0
+call    0 returned 10000
+        -: 1243:
+        -: 1244:  //+2 actions
+    10000: 1245:  state->numActions += 2;
+        -: 1246: 
+        -: 1247:  //discard village card
+    10000: 1248:  discardCard(handPos, currentPlayer, state, 0);
+call    0 returned 10000
+        -: 1249:
+    10000: 1250:  return 0;
+unconditional  0 taken 10000
