@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 	char *testMsg[6];
 
 	testMsg[0] = "Played card count incremented by one";
-	testMsg[1] = "Card placed on top of played pile";	
+	testMsg[1] = "Smithy top card of played pile";	
 	testMsg[2] = "Cards in hand incremented by two";
 	testMsg[3] = "Cards in deck decremented by three";
 	testMsg[4] = "Cards in deck + discard decremented by three";
@@ -86,10 +86,10 @@ int main(int argc, char *argv[]) {
 		iterations = (unsigned long int)atoi(argv[1]);
 	}
 
-	printf("Smithy: Evaluating %lu random test cases.", iterations);
+	printf("Smithy: Evaluating %lu random test cases.\n", iterations);
 	fflush(stdout);
 
-	for (i = 1; i < iterations; i++) {
+	for (i = 1; i <= iterations; i++) {
 		// Set up RNG
 		SelectStream(1);
 		PutSeed((long)i);
@@ -99,14 +99,7 @@ int main(int argc, char *argv[]) {
 		playSmithy(&pre, &post); // call Smithy code
 
 		testSmithy(&pre, &post, err); // evaluate test case
-
-		if (i % 100 == 0) { // A progress bar of sorts
-			printf(".");
-			fflush(stdout);
-		}
 	}
-
-	printf("\n");
 
 	// Print aggregate results
 	printResults("Smithy", iterations, 6, err, testMsg);

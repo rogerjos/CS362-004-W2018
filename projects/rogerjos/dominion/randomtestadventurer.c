@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
 	char *testMsg[7];
 
 	testMsg[0] = "Played card count incremented by one";
-	testMsg[1] = "Card placed on top of played pile";
+	testMsg[1] = "Adventurer top card of played pile";
 	testMsg[2] = "Cards in hand correct net change";
 	testMsg[3] = "Cards drawn are all Treasures";
 	testMsg[4] = "Correct number of cards left in deck";
@@ -103,10 +103,10 @@ int main(int argc, char *argv[]) {
 		iterations = (unsigned long int)atoi(argv[1]);
 	}
 
-	printf("Adventurer: Evaluating %lu random test cases.", iterations);
+	printf("Adventurer: Evaluating %lu random test cases.\n", iterations);
 	fflush(stdout);
 
-	for (i = 1; i < iterations; i++) {
+	for (i = 1; i <= iterations; i++) {
 		// Set up RNG
 		SelectStream(1);
 		PutSeed((long)i);
@@ -116,14 +116,7 @@ int main(int argc, char *argv[]) {
 		playAdventurer(&pre, &post); // call Adventurer code
 
 		testAdventurer(&pre, &post, err); // evaluate test case
-
-		if (i % 100 == 0) { // A progress bar of sorts
-			printf(".");
-			fflush(stdout);
 		}
-	}
-
-	printf("\n");
 
 	// Print aggregate results
 	printResults("Adventurer", iterations, 7, err, testMsg);

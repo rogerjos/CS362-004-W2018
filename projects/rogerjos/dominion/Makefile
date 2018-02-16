@@ -33,9 +33,6 @@ runtests: testDrawCard
 player: player.c interface.o
 	gcc -o player player.c -g  dominion.o rngs.o interface.o $(CFLAGS)
 
-randomTest: randomizeGameTest.c dominion.o rngs.o
-	gcc -o randtest -g randomizeGameTest.c dominion.o rngs.o $(CFLAGS)
-
 unittest1: unittest1.c dominion.o rngs.o
 	gcc -o unittest1 -g  unittest1.c dominion.o rngs.o $(CFLAGS)
 
@@ -92,6 +89,24 @@ rununittest4: unittest4.c dominion.o rngs.o
 	echo "unittest4.c:" > unittest4results.out
 	./unittest4 &>> unittest4results.out
 	gcov -abcfu dominion.c | sed -n '/discardCard/{n;p; n;p; n;p; n;p}' >> unittest4results.out
+
+randomtestcard1.out: randomtestcard1.c dominion.o rngs.o
+	gcc -o randomtestcard1 -g randomtestcard1.c dominion.o rngs.o $(CFLAGS)
+	echo "randomtestcard1.c:" > randomtestcard1.out
+	./randomtestcard1 10000 &>> randomtestcard1.out
+	gcov -abcfu dominion.c | sed -n '/smithyEffect/{n;p; n;p; n;p; n;p}' >> randomtestcard1.out
+
+randomtestcard2.out: randomtestcard2.c dominion.o rngs.o
+	gcc -o randomtestcard2 -g randomtestcard2.c dominion.o rngs.o $(CFLAGS)
+	echo "randomtestcard2.c:" > randomtestcard2.out
+	./randomtestcard2 10000 &>> randomtestcard2.out
+	gcov -abcfu dominion.c | sed -n '/villageEffect/{n;p; n;p; n;p; n;p}' >> randomtestcard2.out
+
+randomtestadventurer.out: randomtestadventurer.c dominion.o rngs.o
+	gcc -o randomtestadventurer -g randomtestadventurer.c dominion.o rngs.o $(CFLAGS)
+	echo "randomtestadventurer.c:" > randomtestadventurer.out
+	./randomtestadventurer 10000 &>> randomtestadventurer.out
+	gcov -abcfu dominion.c | sed -n '/adventurerEffect/{n;p; n;p; n;p; n;p}' >> randomtestadventurer.out
 
 runcardtests: cardtest1 cardtest2 cardtest3 cardtest4
 	echo "cardtest1.c:" > unittestresults.out
