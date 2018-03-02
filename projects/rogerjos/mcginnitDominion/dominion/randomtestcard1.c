@@ -304,7 +304,7 @@ int playSmithy(struct gameState *pre, struct gameState *post) {
 
 	memcpy(post, pre, sizeof(struct gameState)); // Copy pre to post
 
-	smithyEffect(post, post->whoseTurn, post->handCount[post->whoseTurn] - 1); // Play Smithy
+	smithyCard(post, post->whoseTurn, post->handCount[post->whoseTurn] - 1); // Play Smithy
 
 	return 0;
 }

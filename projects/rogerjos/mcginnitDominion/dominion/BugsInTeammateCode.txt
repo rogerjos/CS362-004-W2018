@@ -1,0 +1,141 @@
+Bug 1: The Smithy card effect as implemented in the function smithyCard() at line 673 of Tyler’s dominion.c file omits a call to discardCard(). This is evident upon inspection because, frankly, Smithy is a very simple effect. However, the test output implies a fault of this sort:
+
+ID: Unit 1
+RESULT: PASS
+TEST: Does not return error
+CAUSE: Function exits normally
+
+ID: Unit 2
+RESULT: FAIL
+TEST: Draws three cards into correct hand
+CAUSE: Incorrect card count after exit
+
+ID: Unit 3
+RESULT: PASS
+TEST: Draws three cards from correct deck
+CAUSE: Deck size -3 after exit
+
+ID: Unit 4
+RESULT: FAIL
+TEST: Played card count incremented
+CAUSE: Not incremented by discardCard as expected
+
+ID: Unit 5
+RESULT: FAIL
+TEST: Placed on top of played card pile
+CAUSE: Not copied by discardCard as expected
+
+ID: Unit 6
+RESULT: PASS
+TEST: No unexpected modifications to game state
+CAUSE: No out of bound changes to state
+
+ID: Rand 7
+RESULT: FAIL
+TEST: Played card count incremented by one
+CAUSE: Not incremented by discardCard as expected
+
+ID: Rand 8
+RESULT: FAIL
+TEST: Smithy top card of played pile
+CAUSE: Not copied by discardCard as expected
+
+ID: Rand 9
+RESULT: FAIL
+TEST: Cards in hand incremented by two
+CAUSE: Incorrect card count after exit
+
+ID: Rand 10
+RESULT: PASS
+TEST: Cards in deck decremented by three
+CAUSE: Deck size -3 after exit
+
+ID: Rand 11
+RESULT: PASS
+TEST: Cards in deck + discard decremented by three
+CAUSE: Deck + discard size -3 after exit
+
+ID: Rand 12
+RESULT: PASS
+TEST: No change to out of scope game elements
+CAUSE: No out of bound changes to state
+
+From tests 3 and 10 we can tell that three cards were removed from the deck, and test 11 covers the case wherein the deck has fewer than three cards. We can reasonably assume, then, that three cards are being drawn correctly. From tests 6 and 12 we can conclude that only the elements we expect to be affected by playing the card were affected. However, from tests 2 and 9 we can conclude that the player’s hand does not contain the expected number of cards, from tests 4 and 7 we can conclude that discardCard is not incrementing the number of played cards, and from tests 5 and 8 we can conclude that discardCard is not copying the Smithy card to the played card array. If tests 2 and 9 had passed then we could expect to see discardCard called with the trashflag set, thus bypassing the played card array and not incrementing the played card counter. However, because the player’s hand contains an incorrect number of cards and no unexpected game state elements were changed it is clear that either discardCard was not called or discardCard was called too many times. With these two options in mind inspection of the code to find the bug is trivial.
+
+Bug 2: The Adventurer card effect as implemented in the function adventurerCard() at line 646 of Tyler’s dominion.c file attempts to compare a pointer to an integer (cardDrawn) to integers (4 (copper), 5 (silver), and 6 (gold)) by value at line 658. This is a serious error, and the result is that the card in the top hand position should never be identified as a treasure card unless the pointer is set to equal 4, 5, or 6. However, at  line 657 cardDrawn is set equal to the value of the card in the topmost position, which points cardDrawn at the correct location in memory. Because the pointer is compared by value rather than the contents of that memory location no error is thrown, but any attempt to read memory in [0x00000000, 0x00000026] (the set of possible card values) would result in a terminal error. Luckily cardDrawn is only referenced by value, so no error arises. I noticed this due to a gcc warning as a result of the -Wall compilation flag, not the test results, but it seemed too interesting to pass mentioning since it’s both clearly incorrect and working as intended! This should more properly be called a fault since no actual program misbehavior arises from it, but because it is used improperly any future modification to the function is likely to introduce bugs based on the fault if the pointer is ever used as a pointer..
+
+Bug 3: The Adventurer card effect as implemented in the function adventurerCard() at line 646 of Tyler’s dominion.c file omits a call to drawCard(). This is difficult to derive from the test results because the function failed every test but normal exit! However, the there are reasons to expect there to be an issue with card drawing:
+
+ID: Unit 1
+RESULT: PASS
+TEST: Does not return error
+CAUSE: Function exits normally
+
+ID: Unit 2
+RESULT: FAIL
+TEST: Draws two cards into correct hand
+CAUSE: Incorrect card count after exit
+
+ID: Unit 3
+RESULT: FAIL
+TEST: Cards drawn both treasures
+CAUSE: Most recently-drawn cards not treasures
+
+ID: Unit 4
+RESULT: FAIL
+TEST: Two cards removed from correct deck + discard
+CAUSE: Deck + discard not -2 count at exit
+
+ID: Unit 5
+RESULT: FAIL
+TEST: Played card count incremented
+CAUSE: Not incremented by discardCard as expected
+
+ID: Unit 6
+RESULT: FAIL
+TEST: Placed on top of played card pile
+CAUSE: Not copied by discardCard as expected
+
+ID: Unit 7
+RESULT: FAIL
+TEST: No unexpected modifications to game state
+CAUSE: Out of bound modifications to game state
+
+ID: Rand 8
+RESULT: FAIL
+TEST: Played card count incremented by one
+CAUSE: Not incremented by discardCard as expected
+
+ID: Rand 9
+RESULT: FAIL
+TEST: Adventurer top card of played pile
+CAUSE: Not copied by discardCard as expected
+
+ID: Rand 10
+RESULT: FAIL
+TEST: Cards in hand correct net change
+CAUSE: Hand count not +2 after exit
+
+ID: Rand 11
+RESULT: FAIL
+TEST: Cards drawn are all Treasures
+CAUSE: Most recently-drawn cards not treasures
+
+ID: Rand 12
+RESULT: FAIL
+TEST: Correct number of cards left in deck
+CAUSE: Cards not drawn to treasure 2 index (if 2)
+
+ID: Rand 13
+RESULT: FAIL
+TEST: Correct number of cards discarded
+CAUSE: Cards not discarded to treasure 2 index (if 2))
+
+ID: Rand 14
+RESULT: FAIL
+TEST: No change to out of scope game elements
+CAUSE: Out of bound modifications to game state
+
+The first test must pass, since we call adventurerCard directly and there is no path through adventurerCard that exits with an error. Then we see that every possible test has failed. What could have caused this? Clearly something is seriously wrong with the function. The most significant clue is the failure for both tests 7 and 14. The testing software saves the game state prior to playing Adventurer, overwrites all current game state member variables known to be affected by the adventurerCard function, then compares the original data to the current data. These failures indicate that something changed game state data that was not intentionally affected by the card function. A review of adventurerCard and its called functions reveals no reference to any element not overwritten with original data prior to the comparison, so somehow adventurerCard must be affecting game state data without referencing it by name. Thus adventurerCard is referencing memory directly somehow. The integer pointer cardDrawn seems like a likely culprit, but although its memory location is repeatedly reassigned the contents thereof are never modified. However, at line 667 we see an assignment of the value temphand[z-1] (the top card of the temporary hand) directly to the memory location state->discard[currentPlayer][state->discardCount[currentPlayer]++] (the top of the discard pile). Because memory is allocated sequentially and C is compliant to the point of malice, any attempt to set an out of range element of state->discard[currentPlayer] that falls within the bounds of the struct will modify the contents of whatever member occupies the memory location in question. Further review of the code indicates that currentPlayer is never modified, but discardCount[currentPlayer] is incremented in that very same line 667. Because the current player’s discard count is initialized to 0 and never decreased we can say that it is not negative, but because it is incremented once for each card in the temporary hand its size is limited only by the size of the temporary hand. What, then, would cause a large temporary hand? The temporary hand grows by one for each iteration of the while loop from lines 652-665, and the exit condition is two treasures drawn. The obvious answer here is that fewer than two treasures are drawn until the temporary hand is very large. For any deck that contains at least two treasures this should not be possible (for decks with fewer than two treasures see Bug 4), so this implies that either the drawn cards are not being properly evaluated or the cards are not drawn at all. We are aware of error in using the cardDrawn pointer by value, but although the code is incorrect it is functional. We can conclude, finally, that the cards are not being drawn at all, causing the function to step down through the player’s hand placing each card in turn into the temporary hand, then down into adjacent memory putting whatever integers it finds into the temporary hand until finally two integers in [4, 6] have been discovered. From the definition of the gameState struct at line 55 of dominion we see that the discard array is followed by the discardCount array, the playedCard array, and the playedCardCount. In cases where the player’s hand does not contain two treasures adventurerCard steps down through the player’s hand, then into lower indexed players’ hand arrays, which are each of MAX_HAND size and usually mostly set to -1, which for non-0 index current players is easily enough elements to result in a temporary hand size that will cause modification of out of bounds elements of the game state. This behavior also explains why each of the other tests failed, and so it is the most likely culprit. A terminal review of the code reveals that there is in fact no call to drawCard.
+
+Bug 4: The while loop in adventurerCard at lines 652-665 exits only on the condition that at least two treasure cards have been drawn. The function provides no means to handle situations in which fewer than two treasure cards exist between the current player’s hand and discard pile. In these cases the loop should repeat. Due to the absence of a call to drawCard the behavior in Bug 3 results, but simply adding a call to drawCard is not sufficient, as absence of sufficient treasures would result in failed calls to drawCard and a walk through program memory as described in Bug 3. Instead it is necessary either to introduce a conditional for low-treasure cases, ideally a check of the deck size following the shuffle with a break statement to handle empty post-shuffle decks. This bug was identified in the course of analyzing Bug 3; see above for explanation.

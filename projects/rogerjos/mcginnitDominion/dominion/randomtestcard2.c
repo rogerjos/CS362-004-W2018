@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Program: randomcardtest1.c
+ * Program: randomcardtest2.c
  * Author: Joshua L. Rogers
  * Date: 18 Feb 2018
  * Course: CS362
@@ -306,7 +306,7 @@ int playVillage(struct gameState *pre, struct gameState *post) {
 
 	memcpy(post, pre, sizeof(struct gameState)); // Copy pre to post
 
-	villageEffect(post, post->whoseTurn, post->handCount[post->whoseTurn] - 1); // Play Village
+	villageCard(post, post->whoseTurn, post->handCount[post->whoseTurn] - 1); // Play Village
 
 	return 0;
 }

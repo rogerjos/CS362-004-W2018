@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Program: randomcardtest1.c
+ * Program: randomtestadventurer.c
  * Author: Joshua L. Rogers
  * Date: 18 Feb 2018
  * Course: CS362
@@ -382,7 +382,7 @@ int randomizeGameState(struct gameState *state)
 	then calls adventurerEffect() */
 int playAdventurer(struct gameState *pre, struct gameState *post) {
 
-	int temphand[MAX_HAND] = {-1};
+	int cardDrawn;
 	int	z = 0;
 
 	pre->hand[pre->whoseTurn][pre->handCount[pre->whoseTurn]] = adventurer; // Put an adventurer into current player's hand
@@ -390,7 +390,7 @@ int playAdventurer(struct gameState *pre, struct gameState *post) {
 
 	memcpy(post, pre, sizeof(struct gameState)); // Copy pre to post
 
-	adventurerEffect(post, pre->whoseTurn, temphand, &z); // Play Adventurer
+	adventurerCard(post, pre->whoseTurn, &cardDrawn); // Play Adventurer
 
 	return 0;
 }
